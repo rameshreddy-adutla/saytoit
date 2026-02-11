@@ -1,0 +1,1747 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SayToIt — Voice to Terminal, Instantly</title>
+  <meta name="description" content="Speak commands, write code, draft messages — all from your menu bar. Native macOS voice transcription powered by Deepgram. Open source.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎤</text></svg>">
+
+  <!-- Fonts: Space Grotesk for headings, Inter for body, JetBrains Mono for code -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <style>
+    /* ── Dark theme (default) — deep ocean ── */
+    :root, [data-theme="dark"] {
+      /* Surfaces — deep sea navy */
+      --bg-primary: #060d14;
+      --bg-elevated: #0b1621;
+      --bg-card: #0f1c2b;
+      --bg-card-hover: #142536;
+      --bg-surface: #0a1320;
+
+      /* Text — soft warm white like moonlight on water */
+      --text-primary: #e8eff5;
+      --text-secondary: #7e95a9;
+      --text-tertiary: #445566;
+
+      /* Accent — sea blue / teal */
+      --accent: #22c3dd;
+      --accent-bright: #5fe0f5;
+      --accent-dim: #0e99b5;
+      --accent-glow: rgba(34, 195, 221, 0.1);
+      --accent-glow-strong: rgba(34, 195, 221, 0.22);
+      --accent-2: #f5954e;
+      --accent-2-dim: #d97b35;
+      --accent-2-glow: rgba(245, 149, 78, 0.1);
+
+      /* Semantic */
+      --success: #36d7a0;
+      --warning: #f87171;
+
+      /* Borders */
+      --border: rgba(255, 255, 255, 0.05);
+      --border-hover: rgba(255, 255, 255, 0.09);
+      --border-accent: rgba(34, 195, 221, 0.16);
+
+      /* Shadows */
+      --shadow-card: 0 4px 24px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.02) inset;
+      --shadow-elevated: 0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.02) inset;
+
+      /* Environment */
+      --nav-bg: rgba(6, 13, 20, 0.8);
+      --aurora-opacity: 0.14;
+      --dot-opacity: 0.025;
+      --terminal-bg: #0a1320;
+      --terminal-bar: rgba(255,255,255,0.02);
+      --toggle-bg: rgba(255,255,255,0.07);
+      --toggle-knob: #fff;
+
+      /* Gradients — ocean teal to warm coral */
+      --gradient-accent: linear-gradient(135deg, #0e99b5 0%, #22c3dd 50%, #5fe0f5 100%);
+      --gradient-text: linear-gradient(135deg, #5fe0f5 0%, #22c3dd 30%, #36d7a0 60%, #f5954e 100%);
+      --gradient-glow: linear-gradient(135deg, rgba(34,195,221,0.25) 0%, rgba(54,215,160,0.1) 100%);
+
+      --font-display: 'Space Grotesk', -apple-system, sans-serif;
+      --font-body: 'Inter', -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+      --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    /* ── Light theme — warm coastal ── */
+    [data-theme="light"] {
+      --bg-primary: #f7fafb;
+      --bg-elevated: #ffffff;
+      --bg-card: #ffffff;
+      --bg-card-hover: #f0f6f8;
+      --bg-surface: #eaf2f5;
+      --text-primary: #0c1a24;
+      --text-secondary: #4d6272;
+      --text-tertiary: #93a3af;
+      --accent: #0891b2;
+      --accent-bright: #06b6d4;
+      --accent-dim: #0e7490;
+      --accent-glow: rgba(8, 145, 178, 0.08);
+      --accent-glow-strong: rgba(8, 145, 178, 0.15);
+      --accent-2: #e27525;
+      --accent-2-dim: #c75f14;
+      --accent-2-glow: rgba(226, 117, 37, 0.08);
+      --success: #059669;
+      --warning: #dc2626;
+      --border: rgba(0, 0, 0, 0.06);
+      --border-hover: rgba(0, 0, 0, 0.1);
+      --border-accent: rgba(8, 145, 178, 0.15);
+      --shadow-card: 0 1px 2px rgba(0,0,0,0.04), 0 4px 20px rgba(0,0,0,0.03);
+      --shadow-elevated: 0 8px 40px rgba(0,0,0,0.06);
+      --nav-bg: rgba(247, 250, 251, 0.85);
+      --aurora-opacity: 0.05;
+      --dot-opacity: 0.03;
+      --terminal-bg: #0f1c2b;
+      --terminal-bar: rgba(255,255,255,0.03);
+      --toggle-bg: rgba(0,0,0,0.06);
+      --toggle-knob: #fff;
+      --gradient-accent: linear-gradient(135deg, #0e7490 0%, #0891b2 50%, #06b6d4 100%);
+      --gradient-text: linear-gradient(135deg, #0891b2 0%, #06b6d4 30%, #059669 60%, #e27525 100%);
+      --gradient-glow: linear-gradient(135deg, rgba(8,145,178,0.12) 0%, rgba(5,150,105,0.06) 100%);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      transition: background 0.5s ease, color 0.4s ease;
+    }
+
+    /* ── Aurora background ── */
+    .aurora {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .aurora__beam {
+      position: absolute;
+      width: 150%;
+      height: 400px;
+      filter: blur(120px);
+      opacity: var(--aurora-opacity);
+      border-radius: 50%;
+      transition: opacity 0.6s ease;
+    }
+    .aurora__beam--1 {
+      background: linear-gradient(90deg, rgba(34,195,221,0.35) 0%, rgba(54,215,160,0.2) 50%, transparent 100%);
+      top: -120px;
+      left: -20%;
+      animation: auroraDrift1 18s ease-in-out infinite alternate;
+    }
+    .aurora__beam--2 {
+      background: linear-gradient(90deg, transparent 0%, rgba(245,149,78,0.12) 40%, rgba(34,195,221,0.2) 100%);
+      top: 30%;
+      right: -30%;
+      width: 120%;
+      height: 300px;
+      opacity: 0.08;
+      animation: auroraDrift2 22s ease-in-out infinite alternate;
+      transition: opacity 0.6s ease;
+    }
+    .aurora__beam--3 {
+      background: radial-gradient(ellipse, rgba(54,215,160,0.2) 0%, rgba(34,195,221,0.1) 50%, transparent 70%);
+      bottom: 10%;
+      left: 10%;
+      width: 600px;
+      height: 300px;
+      opacity: 0.1;
+      animation: auroraDrift3 15s ease-in-out infinite alternate;
+      transition: opacity 0.6s ease;
+    }
+
+    @keyframes auroraDrift1 {
+      0% { transform: translateX(0) rotate(-2deg); }
+      100% { transform: translateX(80px) rotate(1deg); }
+    }
+    @keyframes auroraDrift2 {
+      0% { transform: translateX(0) scaleX(1); }
+      100% { transform: translateX(-60px) scaleX(1.1); }
+    }
+    @keyframes auroraDrift3 {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(40px, -30px) scale(1.15); }
+    }
+
+    /* Subtle dot grid */
+    .dot-grid {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      background-image: radial-gradient(circle, rgba(255,255,255, var(--dot-opacity)) 1px, transparent 1px);
+      background-size: 32px 32px;
+      transition: opacity 0.6s ease;
+    }
+
+    /* ── Layout ── */
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 2rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── Navigation ── */
+    .nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      padding: 1rem 2rem;
+      background: var(--nav-bg);
+      backdrop-filter: blur(24px) saturate(150%);
+      -webkit-backdrop-filter: blur(24px) saturate(150%);
+      border-bottom: 1px solid var(--border);
+      transition: background 0.4s ease;
+    }
+
+    .nav__inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .nav__logo {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1.3rem;
+      color: var(--text-primary);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      letter-spacing: -0.02em;
+    }
+
+    .nav__logo-mark {
+      width: 32px;
+      height: 32px;
+      background: var(--gradient-accent);
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      position: relative;
+    }
+    .nav__logo-mark::after {
+      content: '';
+      width: 10px;
+      height: 10px;
+      background: var(--bg-primary);
+      border-radius: 50%;
+      box-shadow: 0 5px 0 var(--bg-primary);
+    }
+
+    .nav__links {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      list-style: none;
+    }
+
+    .nav__link {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+    .nav__link:hover { color: var(--text-primary); }
+
+    .nav__cta {
+      background: var(--gradient-accent);
+      color: #fff;
+      padding: 0.55rem 1.4rem;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.88rem;
+      text-decoration: none;
+      transition: all 0.2s var(--ease-spring);
+    }
+    .nav__cta:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 20px var(--accent-glow-strong);
+    }
+
+    /* ── Hero ── */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 8rem 2rem 4rem;
+    }
+
+    .hero__badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(34, 195, 221, 0.08);
+      border: 1px solid rgba(34, 195, 221, 0.15);
+      color: var(--accent-bright);
+      padding: 0.4rem 1rem;
+      border-radius: 100px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      font-family: var(--font-mono);
+      letter-spacing: 0.04em;
+      margin-bottom: 2.5rem;
+      opacity: 0;
+      animation: fadeUp 0.7s var(--ease-out) 0.2s forwards;
+    }
+
+    .hero__title {
+      font-family: var(--font-display);
+      font-size: clamp(2.8rem, 7vw, 5rem);
+      font-weight: 700;
+      line-height: 1.1;
+      max-width: 800px;
+      margin-bottom: 1.5rem;
+      letter-spacing: -0.03em;
+      opacity: 0;
+      animation: fadeUp 0.7s var(--ease-out) 0.35s forwards;
+    }
+
+    .hero__title-gradient {
+      background: var(--gradient-text);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero__subtitle {
+      font-size: clamp(1.05rem, 2vw, 1.25rem);
+      color: var(--text-secondary);
+      max-width: 560px;
+      margin-bottom: 2.5rem;
+      opacity: 0;
+      animation: fadeUp 0.7s var(--ease-out) 0.5s forwards;
+    }
+
+    .hero__actions {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      opacity: 0;
+      animation: fadeUp 0.7s var(--ease-out) 0.65s forwards;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.85rem 1.75rem;
+      border-radius: 10px;
+      font-weight: 600;
+      text-decoration: none;
+      font-size: 0.95rem;
+      font-family: var(--font-body);
+      transition: all 0.25s var(--ease-spring);
+      cursor: pointer;
+      border: none;
+    }
+    .btn--primary {
+      background: var(--gradient-accent);
+      color: #fff;
+      box-shadow: var(--shadow-elevated), 0 0 24px var(--accent-glow);
+    }
+    .btn--primary:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-elevated), 0 0 40px var(--accent-glow-strong);
+    }
+    .btn--outline {
+      background: transparent;
+      color: var(--text-primary);
+      border: 1px solid var(--border-hover);
+    }
+    .btn--outline:hover {
+      background: rgba(255,255,255,0.04);
+      border-color: rgba(255,255,255,0.2);
+      transform: translateY(-1px);
+    }
+    .btn--dim {
+      background: transparent;
+      color: var(--text-tertiary);
+      border: 1px solid var(--border);
+      cursor: default;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Terminal Demo ── */
+    .terminal-demo {
+      margin-top: 4rem;
+      max-width: 680px;
+      width: 100%;
+      opacity: 0;
+      animation: fadeUp 0.8s var(--ease-out) 0.85s forwards;
+    }
+
+    .terminal {
+      background: var(--terminal-bg);
+      border: 1px solid var(--border-hover);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: var(--shadow-elevated), 0 0 0 1px rgba(255,255,255,0.03) inset;
+      transition: background 0.4s ease, box-shadow 0.4s ease;
+    }
+
+    .terminal__titlebar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 16px;
+      background: var(--terminal-bar);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .terminal__dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+    .terminal__dot--red { background: #ff5f57; }
+    .terminal__dot--yellow { background: #febc2e; }
+    .terminal__dot--green { background: #28c840; }
+    .terminal__title {
+      flex: 1;
+      text-align: center;
+      font-size: 0.78rem;
+      color: var(--text-tertiary);
+      font-family: var(--font-mono);
+    }
+
+    .terminal__body {
+      padding: 1.25rem 1.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      line-height: 1.75;
+    }
+    .terminal__prompt { color: var(--accent-bright); }
+    .terminal__cmd { color: var(--text-primary); }
+    .terminal__output { color: var(--success); }
+    .terminal__recording {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: #f87171;
+      font-weight: 500;
+    }
+    .terminal__recording-dot {
+      width: 7px; height: 7px;
+      background: #f87171;
+      border-radius: 50%;
+      animation: blink 1s ease-in-out infinite;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+    .terminal__transcript {
+      color: var(--accent-2);
+      font-style: italic;
+    }
+    .terminal__cursor {
+      display: inline-block;
+      width: 2px;
+      height: 16px;
+      background: var(--accent);
+      animation: cursorBlink 1s step-end infinite;
+      vertical-align: text-bottom;
+      margin-left: 2px;
+      border-radius: 1px;
+    }
+    /* Pen-writing cursor — solid while actively typing */
+    .terminal__cursor--writing {
+      animation: none;
+      opacity: 1;
+      background: var(--accent-bright);
+      box-shadow: 0 0 6px var(--accent-glow-strong);
+    }
+    @keyframes cursorBlink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    /* ── Soundwave Indicator ── */
+    .soundwave {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      margin-left: 8px;
+      display: inline-flex;
+      vertical-align: middle;
+    }
+    .soundwave__bar {
+      width: 3px;
+      border-radius: 3px;
+      background: #f87171;
+    }
+    .soundwave__bar:nth-child(1) { height: 8px; animation: swave 0.8s ease-in-out 0s infinite alternate; }
+    .soundwave__bar:nth-child(2) { height: 14px; animation: swave 0.8s ease-in-out 0.1s infinite alternate; }
+    .soundwave__bar:nth-child(3) { height: 20px; animation: swave 0.8s ease-in-out 0.2s infinite alternate; }
+    .soundwave__bar:nth-child(4) { height: 12px; animation: swave 0.8s ease-in-out 0.3s infinite alternate; }
+    .soundwave__bar:nth-child(5) { height: 16px; animation: swave 0.8s ease-in-out 0.15s infinite alternate; }
+    @keyframes swave {
+      0% { transform: scaleY(0.4); opacity: 0.5; }
+      100% { transform: scaleY(1); opacity: 1; }
+    }
+
+    /* ── Stats Strip ── */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      margin: 5rem auto 0;
+      max-width: 720px;
+      opacity: 0;
+      animation: fadeUp 0.7s var(--ease-out) 1.1s forwards;
+    }
+    .stats__item {
+      background: var(--bg-card);
+      padding: 2rem;
+      text-align: center;
+      transition: background 0.4s ease;
+    }
+    .stats__value {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .stats__value--cyan { color: var(--accent-2); }
+    .stats__value--purple { color: var(--accent); }
+    .stats__value--green { color: var(--success); }
+    .stats__label {
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      margin-top: 0.25rem;
+    }
+
+    /* ── Section styles ── */
+    .section {
+      padding: 7rem 0;
+    }
+
+    .section__eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--accent);
+      margin-bottom: 0.75rem;
+    }
+
+    .section__title {
+      font-family: var(--font-display);
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.75rem;
+    }
+
+    .section__description {
+      color: var(--text-secondary);
+      font-size: 1.05rem;
+      max-width: 520px;
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 4rem;
+    }
+    .section-header .section__description {
+      margin: 0 auto;
+    }
+
+    /* ── Features ── */
+    .features {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border-radius: 20px;
+      overflow: hidden;
+    }
+
+    .feature {
+      background: var(--bg-card);
+      padding: 2.5rem 2rem;
+      transition: background 0.35s ease, transform 0.3s var(--ease-out);
+      position: relative;
+    }
+    .feature:hover {
+      background: var(--bg-card-hover);
+    }
+
+    .feature__icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      font-size: 1.3rem;
+      margin-bottom: 1.25rem;
+    }
+    .feature__icon--cyan { background: rgba(34, 195, 221, 0.1); }
+    .feature__icon--purple { background: rgba(245, 149, 78, 0.1); }
+    .feature__icon--green { background: rgba(54, 215, 160, 0.1); }
+    .feature__icon--blue { background: rgba(14, 153, 181, 0.1); }
+    .feature__icon--pink { background: rgba(245, 149, 78, 0.08); }
+    .feature__icon--amber { background: rgba(54, 215, 160, 0.08); }
+
+    .feature__title {
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.01em;
+    }
+    .feature__text {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      line-height: 1.65;
+    }
+
+    /* ── How it works ── */
+    .steps {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      position: relative;
+      max-width: 640px;
+      margin: 0 auto;
+    }
+
+    .steps::before {
+      content: '';
+      position: absolute;
+      left: 23px;
+      top: 0;
+      bottom: 0;
+      width: 1px;
+      background: linear-gradient(to bottom, var(--accent), var(--accent-2), var(--success));
+      opacity: 0.2;
+    }
+
+    .step {
+      display: flex;
+      gap: 1.5rem;
+      padding: 2rem 0;
+      position: relative;
+    }
+
+    .step__number {
+      width: 48px;
+      height: 48px;
+      min-width: 48px;
+      border-radius: 12px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-hover);
+      display: grid;
+      place-items: center;
+      font-family: var(--font-mono);
+      font-weight: 600;
+      font-size: 0.85rem;
+      color: var(--accent);
+      position: relative;
+      z-index: 1;
+    }
+
+    .step__content {}
+    .step__title {
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: 1.15rem;
+      margin-bottom: 0.4rem;
+    }
+    .step__text {
+      color: var(--text-secondary);
+      font-size: 0.92rem;
+    }
+
+    /* ── Use Cases — left-aligned stacked list ── */
+    .usecases {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      max-width: 720px;
+    }
+
+    .usecase {
+      display: flex;
+      align-items: flex-start;
+      gap: 1.5rem;
+      padding: 1.75rem 2rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      transition: all 0.3s var(--ease-out), background 0.4s ease;
+    }
+    .usecase:hover {
+      border-color: var(--border-hover);
+      transform: translateX(6px);
+      box-shadow: var(--shadow-card);
+    }
+
+    .usecase__icon {
+      font-size: 1.5rem;
+      width: 48px;
+      height: 48px;
+      min-width: 48px;
+      border-radius: 12px;
+      background: var(--bg-elevated);
+      display: grid;
+      place-items: center;
+    }
+
+    .usecase__title {
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: 1.05rem;
+      margin-bottom: 0.3rem;
+    }
+    .usecase__text {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
+    /* ── Platforms ── */
+    .platforms {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    .platform {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2.5rem 2rem;
+      text-align: center;
+      transition: all 0.3s var(--ease-out), background 0.4s ease;
+    }
+    .platform:hover {
+      border-color: var(--border-hover);
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-elevated);
+    }
+    .platform--dim {
+      opacity: 0.5;
+    }
+    .platform--dim:hover {
+      opacity: 0.65;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .platform__icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      display: block;
+    }
+    .platform__name {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1.3rem;
+      margin-bottom: 0.75rem;
+    }
+    .platform__tag {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 100px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      font-family: var(--font-mono);
+      margin-bottom: 1rem;
+    }
+    .platform__tag--available {
+      background: rgba(52,211,153,0.1);
+      color: var(--success);
+      border: 1px solid rgba(52,211,153,0.2);
+    }
+    .platform__tag--soon {
+      background: rgba(255,255,255,0.04);
+      color: var(--text-tertiary);
+      border: 1px solid var(--border);
+    }
+    .platform__features {
+      list-style: none;
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+    }
+    .platform__features li {
+      padding: 0.4rem 0;
+    }
+
+    /* ── Pricing ── */
+    .pricing-card {
+      max-width: 480px;
+      margin: 0 auto;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 3rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      transition: background 0.4s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    .pricing-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--gradient-accent);
+    }
+    .pricing-card__price {
+      font-family: var(--font-display);
+      font-size: 3.5rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      margin-bottom: 0.25rem;
+    }
+    .pricing-card__unit {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      margin-bottom: 2rem;
+    }
+    .pricing-card__features {
+      list-style: none;
+      text-align: left;
+      margin-bottom: 2rem;
+    }
+    .pricing-card__features li {
+      padding: 0.6rem 0;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-secondary);
+      font-size: 0.92rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .pricing-card__features li:last-child { border-bottom: none; }
+    .pricing-card__check {
+      color: var(--success);
+      font-weight: 700;
+      font-size: 1rem;
+    }
+
+    /* ── FAQ ── */
+    .faq {
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    .faq__item {
+      border-bottom: 1px solid var(--border);
+    }
+
+    .faq__question {
+      width: 100%;
+      background: none;
+      border: none;
+      padding: 1.5rem 0;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: 1.05rem;
+      color: var(--text-primary);
+    }
+    .faq__question:hover { color: var(--accent); }
+
+    .faq__chevron {
+      font-size: 1.2rem;
+      color: var(--text-tertiary);
+      transition: transform 0.3s ease;
+      flex-shrink: 0;
+    }
+    .faq__item.open .faq__chevron {
+      transform: rotate(45deg);
+      color: var(--accent);
+    }
+
+    .faq__answer {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.4s var(--ease-out), padding 0.3s ease;
+    }
+    .faq__item.open .faq__answer {
+      max-height: 300px;
+    }
+    .faq__answer-inner {
+      padding-bottom: 1.5rem;
+      color: var(--text-secondary);
+      font-size: 0.92rem;
+      line-height: 1.7;
+    }
+
+    /* ── CTA ── */
+    .cta {
+      text-align: center;
+      padding: 8rem 0;
+    }
+    .cta__title {
+      font-family: var(--font-display);
+      font-size: clamp(2rem, 5vw, 3rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 1rem;
+    }
+    .cta__text {
+      color: var(--text-secondary);
+      font-size: 1.1rem;
+      margin-bottom: 2.5rem;
+      max-width: 500px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* ── Footer ── */
+    .footer {
+      padding: 3rem 0;
+      border-top: 1px solid var(--border);
+      text-align: center;
+    }
+    .footer__brand {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+    }
+    .footer__copy {
+      color: var(--text-tertiary);
+      font-size: 0.85rem;
+      margin-bottom: 1.5rem;
+    }
+    .footer__links {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+    }
+    .footer__link {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.85rem;
+    }
+    .footer__link:hover { color: var(--accent); }
+
+    /* ── Scroll reveal ── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(32px);
+      transition: opacity 0.7s var(--ease-out), transform 0.7s var(--ease-out);
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .nav__links { display: none; }
+      .features { grid-template-columns: 1fr; }
+      .platforms { grid-template-columns: 1fr; }
+      .stats { grid-template-columns: 1fr; }
+      .section { padding: 4rem 0; }
+    }
+
+    /* ── Theme toggle (Apple-style pill) ── */
+    .theme-toggle {
+      position: relative;
+      width: 52px;
+      height: 28px;
+      background: var(--toggle-bg);
+      border-radius: 100px;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      transition: background 0.3s ease, border-color 0.3s ease;
+      display: flex;
+      align-items: center;
+      padding: 0 3px;
+      flex-shrink: 0;
+    }
+    .theme-toggle:hover {
+      border-color: var(--border-hover);
+    }
+
+    .theme-toggle__knob {
+      width: 22px;
+      height: 22px;
+      background: var(--toggle-knob);
+      border-radius: 50%;
+      transition: transform 0.35s var(--ease-spring);
+      display: grid;
+      place-items: center;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+    }
+    .theme-toggle__knob svg {
+      width: 12px;
+      height: 12px;
+      transition: opacity 0.2s ease;
+    }
+    .theme-toggle__moon, .theme-toggle__sun { position: absolute; }
+    .theme-toggle__moon { opacity: 1; }
+    .theme-toggle__sun { opacity: 0; }
+
+    [data-theme="light"] .theme-toggle {
+      background: var(--gradient-accent);
+      border-color: var(--accent-dim);
+    }
+    [data-theme="light"] .theme-toggle__knob {
+      transform: translateX(24px);
+    }
+    [data-theme="light"] .theme-toggle__moon { opacity: 0; }
+    [data-theme="light"] .theme-toggle__sun { opacity: 1; }
+
+    /* ── Premium card glow borders (dark only) ── */
+    [data-theme="dark"] .pricing-card {
+      border-color: var(--border-accent);
+      box-shadow: var(--shadow-card), 0 0 40px var(--accent-glow);
+    }
+    [data-theme="dark"] .terminal {
+      border-color: rgba(34, 195, 221, 0.08);
+    }
+
+    /* ── Light mode special overrides ── */
+    [data-theme="light"] .dot-grid {
+      background-image: radial-gradient(circle, rgba(0,0,0,0.04) 1px, transparent 1px);
+    }
+    [data-theme="light"] .aurora__beam--1 {
+      background: linear-gradient(90deg, rgba(8,145,178,0.2) 0%, rgba(5,150,105,0.12) 50%, transparent 100%);
+    }
+    [data-theme="light"] .aurora__beam--2 {
+      background: linear-gradient(90deg, transparent 0%, rgba(226,117,37,0.08) 40%, rgba(8,145,178,0.12) 100%);
+    }
+    [data-theme="light"] .aurora__beam--3 {
+      background: radial-gradient(ellipse, rgba(5,150,105,0.08) 0%, rgba(8,145,178,0.05) 50%, transparent 70%);
+    }
+    [data-theme="light"] .terminal__body {
+      color: #e2e8f0;
+    }
+    [data-theme="light"] .terminal__titlebar {
+      background: rgba(255,255,255,0.04);
+    }
+    [data-theme="light"] .terminal__output {
+      color: #94a3b8;
+    }
+    [data-theme="light"] .nav__logo-mark {
+      box-shadow: 0 2px 8px rgba(2,132,199,0.25);
+    }
+    [data-theme="light"] .feature {
+      box-shadow: var(--shadow-card);
+    }
+    [data-theme="light"] .stats {
+      box-shadow: var(--shadow-card);
+    }
+    [data-theme="light"] .platform {
+      box-shadow: var(--shadow-card);
+    }
+    [data-theme="light"] .pricing-card {
+      box-shadow: var(--shadow-card);
+    }
+    [data-theme="light"] .usecase {
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    [data-theme="light"] .btn--primary {
+      box-shadow: 0 2px 16px rgba(8,145,178,0.2);
+      color: #fff;
+    }
+    [data-theme="light"] .hero__title-gradient {
+      background: var(--gradient-text);
+      -webkit-background-clip: text;
+      background-clip: text;
+    }
+    [data-theme="light"] .hero__badge {
+      background: rgba(8, 145, 178, 0.06);
+      border-color: rgba(8, 145, 178, 0.12);
+    }
+
+    /* Smooth transitions on all themed surfaces */
+    .stats__item, .feature, .usecase, .platform, .pricing-card, .step__number,
+    .faq__item, .btn, .hero__badge, .nav__cta, .footer {
+      transition: background 0.4s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, transform 0.25s var(--ease-spring);
+    }
+
+    /* Divider — horizontal gradient line */
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border-hover), transparent);
+      margin: 0 auto;
+      max-width: 600px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Background layers -->
+  <div class="aurora">
+    <div class="aurora__beam aurora__beam--1"></div>
+    <div class="aurora__beam aurora__beam--2"></div>
+    <div class="aurora__beam aurora__beam--3"></div>
+  </div>
+  <div class="dot-grid"></div>
+
+  <!-- Nav -->
+  <nav class="nav">
+    <div class="nav__inner">
+      <a href="#" class="nav__logo">
+        <span class="nav__logo-mark"></span>
+        SayToIt
+      </a>
+      <ul class="nav__links">
+        <li><a href="#features" class="nav__link">Features</a></li>
+        <li><a href="#how" class="nav__link">How It Works</a></li>
+        <li><a href="#pricing" class="nav__link">Pricing</a></li>
+        <li><a href="#faq" class="nav__link">FAQ</a></li>
+      </ul>
+      <div style="display: flex; align-items: center; gap: 1rem;">
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+          <div class="theme-toggle__knob">
+            <svg class="theme-toggle__moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="color: #475569;">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+            </svg>
+            <svg class="theme-toggle__sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="color: #f59e0b;">
+              <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+            </svg>
+          </div>
+        </button>
+        <a href="#download" class="nav__cta">Download</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero__badge">$ open source · MIT</div>
+
+    <h1 class="hero__title">
+      Say it. See it.<br><span class="hero__title-gradient">Ship it.</span>
+    </h1>
+
+    <p class="hero__subtitle">
+      Speak naturally and watch your words flow into any app. Built for developers who think faster than they type.
+    </p>
+
+    <div class="hero__actions">
+      <a href="#download" class="btn btn--primary">
+        ⬇ &nbsp;Download for Mac
+      </a>
+      <a href="https://github.com/rameshreddy-adutla/saytoit" class="btn btn--outline" target="_blank">
+        ★ &nbsp;GitHub
+      </a>
+      <span class="btn btn--dim">
+        iOS — Coming Soon
+      </span>
+    </div>
+
+    <!-- Terminal Demo -->
+    <div class="terminal-demo">
+      <div class="terminal">
+        <div class="terminal__titlebar">
+          <span class="terminal__dot terminal__dot--red"></span>
+          <span class="terminal__dot terminal__dot--yellow"></span>
+          <span class="terminal__dot terminal__dot--green"></span>
+          <span class="terminal__title">Terminal — zsh</span>
+          <span style="width: 36px;"></span>
+        </div>
+        <div class="terminal__body" id="terminalBody">
+          <!-- Animated content injected by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats" style="margin-top: 4rem;">
+      <div class="stats__item">
+        <div class="stats__value stats__value--cyan">$0</div>
+        <div class="stats__label">Free & open source</div>
+      </div>
+      <div class="stats__item">
+        <div class="stats__value stats__value--purple">~$0.006</div>
+        <div class="stats__label">Per minute (BYOK)</div>
+      </div>
+      <div class="stats__item">
+        <div class="stats__value stats__value--green">&lt;200ms</div>
+        <div class="stats__label">Transcription latency</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section id="features" class="section">
+    <div class="container">
+      <div class="section-header reveal">
+        <div class="section__eyebrow">// features</div>
+        <h2 class="section__title">Everything you need, nothing you don't</h2>
+        <p class="section__description">A native macOS app that lives in your menu bar. No Electron, no bloat—just fast, accurate voice input.</p>
+      </div>
+
+      <div class="features reveal">
+        <div class="feature">
+          <div class="feature__icon feature__icon--cyan">⌨️</div>
+          <div class="feature__title">Global Hotkey</div>
+          <p class="feature__text">Press ⌘⇧S from anywhere to start recording. Your transcript lands exactly where your cursor is.</p>
+        </div>
+        <div class="feature">
+          <div class="feature__icon feature__icon--purple">🔊</div>
+          <div class="feature__title">Real-Time Streaming</div>
+          <p class="feature__text">See words appear as you speak. Deepgram's streaming API delivers partial results in under 200ms.</p>
+        </div>
+        <div class="feature">
+          <div class="feature__icon feature__icon--green">🔒</div>
+          <div class="feature__title">Your Keys, Your Data</div>
+          <p class="feature__text">Bring your own Deepgram API key. Audio goes directly from your Mac to Deepgram—we never see it.</p>
+        </div>
+        <div class="feature">
+          <div class="feature__icon feature__icon--blue">📋</div>
+          <div class="feature__title">Auto-Copy & Paste</div>
+          <p class="feature__text">Finished speaking? Your transcript is on the clipboard instantly. Optionally auto-paste into the active app.</p>
+        </div>
+        <div class="feature">
+          <div class="feature__icon feature__icon--pink">🔑</div>
+          <div class="feature__title">Keychain Storage</div>
+          <p class="feature__text">API keys stored in macOS Keychain. Never written to disk, never in plain text. Enterprise-grade security.</p>
+        </div>
+        <div class="feature">
+          <div class="feature__icon feature__icon--amber">🪶</div>
+          <div class="feature__title">Tiny Footprint</div>
+          <p class="feature__text">Pure SwiftUI. Under 10MB, minimal CPU usage. Runs all day in your menu bar without you noticing.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- How It Works -->
+  <section id="how" class="section">
+    <div class="container">
+      <div class="section-header reveal">
+        <div class="section__eyebrow">// workflow</div>
+        <h2 class="section__title">Voice in, text out</h2>
+        <p class="section__description">Three steps. Zero friction.</p>
+      </div>
+
+      <div class="steps reveal">
+        <div class="step">
+          <div class="step__number">01</div>
+          <div class="step__content">
+            <div class="step__title">Activate</div>
+            <p class="step__text">Hit your hotkey or click the menu bar icon. A subtle indicator shows you're recording — nothing gets in the way of your flow.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step__number">02</div>
+          <div class="step__content">
+            <div class="step__title">Speak</div>
+            <p class="step__text">Talk naturally. Audio streams to Deepgram over WebSocket and partial transcripts appear in real time.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step__number">03</div>
+          <div class="step__content">
+            <div class="step__title">Done</div>
+            <p class="step__text">Stop recording. Final transcript is auto-copied to your clipboard and optionally pasted into the active app — Copilot CLI, Slack, your editor.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- Use Cases -->
+  <section class="section">
+    <div class="container">
+      <div class="reveal" style="margin-bottom: 3rem;">
+        <div class="section__eyebrow">// built for</div>
+        <h2 class="section__title">How developers use it</h2>
+        <p class="section__description">Optimised for terminal-first workflows.</p>
+      </div>
+
+      <div class="usecases reveal">
+        <div class="usecase">
+          <div class="usecase__icon">⬛</div>
+          <div>
+            <div class="usecase__title">Copilot CLI & Terminal</div>
+            <p class="usecase__text">Speak complex prompts instead of typing them. Describe bugs, explain architecture, dictate commands — all pasted directly into your terminal.</p>
+          </div>
+        </div>
+        <div class="usecase">
+          <div class="usecase__icon">📝</div>
+          <div>
+            <div class="usecase__title">Docs & Pull Requests</div>
+            <p class="usecase__text">Write PR descriptions, code comments, and documentation at the speed of speech. Voice-to-text, refined by you.</p>
+          </div>
+        </div>
+        <div class="usecase">
+          <div class="usecase__icon">💬</div>
+          <div>
+            <div class="usecase__title">Chat & Standups</div>
+            <p class="usecase__text">Reply to Slack threads, draft emails, or give standup updates without touching the keyboard.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- Platforms -->
+  <section id="platforms" class="section">
+    <div class="container">
+      <div class="section-header reveal">
+        <div class="section__eyebrow">// platforms</div>
+        <h2 class="section__title">Native. Not wrapped.</h2>
+        <p class="section__description">Built with SwiftUI for genuine macOS integration.</p>
+      </div>
+
+      <div class="platforms reveal">
+        <div class="platform">
+          <span class="platform__icon">💻</span>
+          <div class="platform__name">macOS</div>
+          <span class="platform__tag platform__tag--available">Available Now</span>
+          <ul class="platform__features">
+            <li>Menu bar app with global hotkey</li>
+            <li>Real-time streaming transcription</li>
+            <li>Auto-paste to frontmost app</li>
+            <li>Keychain API key storage</li>
+            <li>macOS 14 Sonoma+</li>
+          </ul>
+        </div>
+        <div class="platform platform--dim">
+          <span class="platform__icon">📱</span>
+          <div class="platform__name">iOS</div>
+          <span class="platform__tag platform__tag--soon">Coming Later</span>
+          <ul class="platform__features">
+            <li>Share sheet integration</li>
+            <li>Apple Speech (on-device)</li>
+            <li>Copy & share transcripts</li>
+            <li>iCloud sync with Mac</li>
+            <li>iOS 17+</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- Pricing -->
+  <section id="pricing" class="section">
+    <div class="container">
+      <div class="section-header reveal">
+        <div class="section__eyebrow">// pricing</div>
+        <h2 class="section__title">Bring Your Own Key</h2>
+        <p class="section__description">No subscription. No data collection. Just your API key and a great app.</p>
+      </div>
+
+      <div class="pricing-card reveal">
+        <div class="pricing-card__price">Free</div>
+        <div class="pricing-card__unit">You only pay Deepgram for usage</div>
+        <ul class="pricing-card__features">
+          <li><span class="pricing-card__check">✓</span> App is free & open source forever</li>
+          <li><span class="pricing-card__check">✓</span> $200 free Deepgram credit on signup</li>
+          <li><span class="pricing-card__check">✓</span> ~$0.36/hr at Deepgram's pay-as-you-go rate</li>
+          <li><span class="pricing-card__check">✓</span> No middleman — audio goes direct to Deepgram</li>
+          <li><span class="pricing-card__check">✓</span> No account needed for SayToIt itself</li>
+        </ul>
+        <a href="https://console.deepgram.com/signup" class="btn btn--primary" target="_blank" style="width: 100%; justify-content: center;">
+          Get Deepgram API Key →
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- FAQ -->
+  <section id="faq" class="section">
+    <div class="container">
+      <div class="section-header reveal">
+        <div class="section__eyebrow">// faq</div>
+        <h2 class="section__title">Questions</h2>
+      </div>
+
+      <div class="faq reveal">
+        <div class="faq__item">
+          <button class="faq__question">
+            Is my audio data private?
+            <span class="faq__chevron">+</span>
+          </button>
+          <div class="faq__answer">
+            <div class="faq__answer-inner">Audio streams directly from your Mac to Deepgram's API using your own key. SayToIt never sees, stores, or routes your audio through any server. The app has zero network calls except the Deepgram WebSocket.</div>
+          </div>
+        </div>
+
+        <div class="faq__item">
+          <button class="faq__question">
+            How much does Deepgram actually cost?
+            <span class="faq__chevron">+</span>
+          </button>
+          <div class="faq__answer">
+            <div class="faq__answer-inner">Deepgram's pay-as-you-go rate is ~$0.006/minute ($0.36/hour). New accounts get $200 in free credit — enough for ~550 hours of transcription. Most developers will never exhaust the free tier.</div>
+          </div>
+        </div>
+
+        <div class="faq__item">
+          <button class="faq__question">
+            Will you add Apple Speech / on-device transcription?
+            <span class="faq__chevron">+</span>
+          </button>
+          <div class="faq__answer">
+            <div class="faq__answer-inner">It's on the roadmap. Deepgram is the priority for v1 because of its superior accuracy and real-time streaming. Apple Speech will be added as a free, offline alternative in a future release.</div>
+          </div>
+        </div>
+
+        <div class="faq__item">
+          <button class="faq__question">
+            Can I use this with Copilot CLI?
+            <span class="faq__chevron">+</span>
+          </button>
+          <div class="faq__answer">
+            <div class="faq__answer-inner">Absolutely — that's the primary use case. Activate SayToIt, speak your prompt, and it's pasted directly into your terminal. Works with Copilot CLI, any shell command, or any text input in any app.</div>
+          </div>
+        </div>
+
+        <div class="faq__item">
+          <button class="faq__question">
+            Is it really open source?
+            <span class="faq__chevron">+</span>
+          </button>
+          <div class="faq__answer">
+            <div class="faq__answer-inner">Yes. MIT licensed. Full source code on GitHub. You can build from source, fork it, contribute — whatever you like. No telemetry, no analytics, no tracking of any kind.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section id="download" class="cta">
+    <div class="container">
+      <h2 class="cta__title reveal">Ready to say it?</h2>
+      <p class="cta__text reveal">Download SayToIt and turn your voice into text in seconds.</p>
+      <div class="hero__actions reveal">
+        <a href="https://github.com/rameshreddy-adutla/saytoit/releases/latest" class="btn btn--primary" target="_blank">
+          ⬇ &nbsp;Download for Mac
+        </a>
+        <a href="https://github.com/rameshreddy-adutla/saytoit" class="btn btn--outline" target="_blank">
+          ★ &nbsp;Star on GitHub
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer__brand">SayToIt</div>
+      <p class="footer__copy">Voice to terminal, instantly. Open source under MIT.</p>
+      <div class="footer__links">
+        <a href="https://github.com/rameshreddy-adutla/saytoit" class="footer__link">GitHub</a>
+        <a href="#" class="footer__link">Privacy</a>
+        <a href="#" class="footer__link">License</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // ── Theme toggle ──
+    (() => {
+      const html = document.documentElement;
+      const toggle = document.getElementById('themeToggle');
+      const stored = localStorage.getItem('saytoit-theme');
+
+      const setTheme = (theme) => {
+        html.setAttribute('data-theme', theme);
+        localStorage.setItem('saytoit-theme', theme);
+      };
+
+      setTheme(stored || 'dark');
+
+      toggle.addEventListener('click', () => {
+        const current = html.getAttribute('data-theme') || 'dark';
+        setTheme(current === 'dark' ? 'light' : 'dark');
+      });
+    })();
+
+    // ── Scroll reveal ──
+    const reveals = document.querySelectorAll('.reveal');
+    const onScroll = () => {
+      const wh = window.innerHeight;
+      reveals.forEach(el => {
+        if (el.getBoundingClientRect().top < wh - 80) el.classList.add('visible');
+      });
+    };
+    window.addEventListener('scroll', onScroll);
+    window.addEventListener('load', onScroll);
+
+    // ── FAQ toggle ──
+    document.querySelectorAll('.faq__question').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const item = btn.parentElement;
+        const wasOpen = item.classList.contains('open');
+        document.querySelectorAll('.faq__item.open').forEach(i => i.classList.remove('open'));
+        if (!wasOpen) item.classList.add('open');
+      });
+    });
+
+    // ── Stagger reveals ──
+    document.querySelectorAll('.features .feature').forEach((c, i) => { c.style.transitionDelay = `${i * 0.05}s`; });
+    document.querySelectorAll('.usecases .usecase').forEach((c, i) => { c.style.transitionDelay = `${i * 0.08}s`; });
+
+    // ── Terminal typing animation — pen writing effect ──
+    (() => {
+      const body = document.getElementById('terminalBody');
+      if (!body) return;
+
+      // Diverse scenarios — voice-to-text works everywhere
+      const scenarios = [
+        {
+          label: 'Slack message',
+          voice: 'Hey team, the deployment is done and staging looks good. Let me know if you see any regressions before we push to prod.',
+          result: '✓ Copied to clipboard'
+        },
+        {
+          prompt: 'git commit -m "',
+          voice: 'refactor auth middleware to use JWT refresh tokens with a sliding expiry window',
+          result: '✓ Transcript inserted',
+          suffix: '"'
+        },
+        {
+          label: 'Email draft',
+          voice: 'Hi Sarah, thanks for the feedback on the proposal. I have updated the timeline and added the cost breakdown you requested. Let me know if you need anything else.',
+          result: '✓ Copied to clipboard'
+        },
+        {
+          prompt: 'copilot "help me fix the failing test"',
+          voice: 'the user model test is asserting the wrong email format, update it to match the RFC 5322 spec',
+          result: '✓ Copied to clipboard · Pasted into terminal'
+        },
+        {
+          label: 'PR description',
+          voice: 'This PR adds rate limiting to the public API endpoints. It uses a sliding window algorithm with Redis as the backing store. Default limit is 100 requests per minute per API key.',
+          result: '✓ Copied to clipboard'
+        },
+        {
+          label: 'Meeting notes',
+          voice: 'Action items from standup. James will finish the database migration by Thursday. I will review the security audit report and share findings by end of day.',
+          result: '✓ Copied to clipboard'
+        }
+      ];
+
+      let sceneIdx = 0;
+      const pause = ms => new Promise(r => setTimeout(r, ms));
+
+      const mk = (tag, cls, txt) => {
+        const e = document.createElement(tag);
+        if (cls) e.className = cls;
+        if (txt) e.textContent = txt;
+        return e;
+      };
+
+      const waveBars = () => {
+        const sw = mk('span', 'soundwave');
+        for (let i = 0; i < 5; i++) sw.appendChild(mk('span', 'soundwave__bar'));
+        return sw;
+      };
+
+      // ── Pen-writing: word by word with human breathing rhythm ──
+      const penWrite = async (container, text, cursorEl) => {
+        const span = mk('span', 'terminal__transcript');
+        container.insertBefore(span, cursorEl);
+        cursorEl.classList.add('terminal__cursor--writing');
+
+        const words = text.split(' ');
+        for (let w = 0; w < words.length; w++) {
+          const word = words[w];
+
+          // Each letter with organic pen speed
+          for (let i = 0; i < word.length; i++) {
+            span.textContent += word[i];
+            const ch = word[i];
+            let delay;
+            if ('.!?'.includes(ch)) delay = 200 + Math.random() * 100;
+            else if (',;:'.includes(ch)) delay = 150 + Math.random() * 80;
+            else delay = 60 + Math.random() * 40; // ~60-100ms per char
+            await pause(delay);
+          }
+
+          // Space + natural breathing pauses between words
+          if (w < words.length - 1) {
+            span.textContent += ' ';
+            const last = word[word.length - 1];
+            if ('.!?'.includes(last)) {
+              await pause(500 + Math.random() * 300); // sentence break — long breath
+            } else if (',;:'.includes(last)) {
+              await pause(300 + Math.random() * 200); // clause break
+            } else if (w > 0 && (w + 1) % 5 === 0) {
+              await pause(180 + Math.random() * 120); // natural phrase rhythm
+            } else {
+              await pause(80 + Math.random() * 60); // normal word gap
+            }
+          }
+        }
+
+        cursorEl.classList.remove('terminal__cursor--writing');
+      };
+
+      // ── Keyboard typing for commands ──
+      const typeCmd = async (container, text, cursorEl) => {
+        const span = mk('span', 'terminal__cmd');
+        container.insertBefore(span, cursorEl);
+        cursorEl.classList.add('terminal__cursor--writing');
+
+        for (let i = 0; i < text.length; i++) {
+          span.textContent += text[i];
+          const ch = text[i];
+          let delay;
+          if (ch === ' ') delay = 100 + Math.random() * 60;
+          else if ('"\''.includes(ch)) delay = 120 + Math.random() * 60;
+          else delay = 55 + Math.random() * 35;
+          await pause(delay);
+        }
+
+        cursorEl.classList.remove('terminal__cursor--writing');
+      };
+
+      const runScene = async (s) => {
+        body.innerHTML = '';
+
+        // ── Step 1: Command prompt (or context label) ──
+        const ln1 = mk('div');
+        const cursor = mk('span', 'terminal__cursor');
+
+        if (s.prompt) {
+          ln1.appendChild(mk('span', 'terminal__prompt', '❯'));
+          ln1.appendChild(document.createTextNode(' '));
+          ln1.appendChild(cursor);
+          body.appendChild(ln1);
+          await pause(700);
+          await typeCmd(ln1, s.prompt, cursor);
+          await pause(500);
+          cursor.remove();
+        } else if (s.label) {
+          const lbl = mk('div');
+          lbl.style.cssText = 'color:var(--text-tertiary);font-size:0.8rem;margin-bottom:6px;';
+          lbl.textContent = '// ' + s.label;
+          body.appendChild(lbl);
+          await pause(800);
+        }
+
+        // ── Step 2: Recording indicator fades in ──
+        const ln2 = mk('div');
+        ln2.style.cssText = 'margin-top:10px;opacity:0;transition:opacity 0.6s ease';
+        const rec = mk('span', 'terminal__recording');
+        rec.appendChild(mk('span', 'terminal__recording-dot'));
+        rec.appendChild(document.createTextNode(' SayToIt listening'));
+        ln2.appendChild(rec);
+        ln2.appendChild(waveBars());
+        body.appendChild(ln2);
+        await pause(60);
+        ln2.style.opacity = '1';
+        await pause(1000); // Let the recording indicator breathe
+
+        // ── Step 3: Pen writes the transcript ──
+        const ln3 = mk('div');
+        ln3.style.marginTop = '12px';
+        ln3.appendChild(mk('span', 'terminal__transcript', '\u201c'));
+        const penCursor = mk('span', 'terminal__cursor');
+        ln3.appendChild(penCursor);
+        body.appendChild(ln3);
+
+        await penWrite(ln3, s.voice, penCursor);
+
+        ln3.insertBefore(mk('span', 'terminal__transcript', '\u201d'), penCursor);
+        penCursor.remove();
+        await pause(800);
+
+        // ── Step 4: Recording stops ──
+        ln2.style.opacity = '0';
+        await pause(500);
+        ln2.innerHTML = '';
+        const done = mk('span');
+        done.style.cssText = 'color:var(--text-tertiary);font-size:0.82rem;';
+        done.textContent = '■ Done';
+        ln2.appendChild(done);
+        ln2.style.opacity = '0.5';
+        await pause(700);
+
+        // Suffix for commands like git commit -m "..."
+        if (s.suffix) {
+          const cmds = ln1.querySelectorAll('.terminal__cmd');
+          if (cmds.length) cmds[cmds.length - 1].textContent += s.suffix;
+        }
+
+        // ── Step 5: Success confirmation fades in ──
+        const ln4 = mk('div');
+        ln4.style.cssText = 'margin-top:12px;opacity:0;transition:opacity 0.6s ease';
+        ln4.appendChild(mk('span', 'terminal__output', s.result));
+        body.appendChild(ln4);
+        await pause(80);
+        ln4.style.opacity = '1';
+        await pause(1000);
+
+        // ── Step 6: Fresh prompt ──
+        const ln5 = mk('div');
+        ln5.style.marginTop = '12px';
+        ln5.appendChild(mk('span', 'terminal__prompt', '❯'));
+        ln5.appendChild(document.createTextNode(' '));
+        ln5.appendChild(mk('span', 'terminal__cursor'));
+        body.appendChild(ln5);
+      };
+
+      const loop = async () => {
+        while (true) {
+          await runScene(scenarios[sceneIdx]);
+          await pause(5500); // Long rest between scenes
+          sceneIdx = (sceneIdx + 1) % scenarios.length;
+        }
+      };
+
+      // Start only when the terminal scrolls into view
+      const obs = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting) { obs.disconnect(); loop(); }
+      }, { threshold: 0.3 });
+      obs.observe(body.closest('.terminal-demo'));
+    })();
+  </script>
+</body>
+</html>

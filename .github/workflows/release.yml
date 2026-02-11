@@ -1,0 +1,37 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-release:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_15.4.app/Contents/Developer
+
+      - name: Build Release
+        run: swift build -c release
+
+      - name: Get version
+        id: version
+        run: echo "VERSION=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
+
+      - name: Package
+        run: |
+          mkdir -p release
+          cp -r .build/release/SayToIt release/
+          cd release && zip -r SayToIt-${{ steps.version.outputs.VERSION }}-macOS.zip SayToIt
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release/SayToIt-${{ steps.version.outputs.VERSION }}-macOS.zip
+          generate_release_notes: true
