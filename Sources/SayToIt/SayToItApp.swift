@@ -14,9 +14,11 @@ struct SayToItApp: App {
         }
         .menuBarExtraStyle(.window)
 
-        Settings {
+        Window("SayToIt Settings", id: "settings") {
             SettingsView()
                 .environmentObject(appState)
         }
+        .windowResizability(.contentSize)
+        .defaultPosition(.center)
     }
 }

@@ -3,6 +3,7 @@ import SwiftUI
 /// Main menu bar popover view.
 struct MenuBarView: View {
     @EnvironmentObject var appState: AppState
+    @Environment(\.openWindow) private var openWindow
 
     var body: some View {
         VStack(spacing: 12) {
@@ -29,11 +30,7 @@ struct MenuBarView: View {
             HStack {
                 if !appState.hasAPIKey {
                     Button {
-                        if #available(macOS 14, *) {
-                            NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
-                        } else {
-                            NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
-                        }
+                        openWindow(id: "settings")
                         NSApp.activate(ignoringOtherApps: true)
                     } label: {
                         HStack(spacing: 6) {
@@ -71,11 +68,7 @@ struct MenuBarView: View {
                 }
 
                 Button {
-                    if #available(macOS 14, *) {
-                        NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
-                    } else {
-                        NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
-                    }
+                    openWindow(id: "settings")
                     NSApp.activate(ignoringOtherApps: true)
                 } label: {
                     Image(systemName: "gear")
