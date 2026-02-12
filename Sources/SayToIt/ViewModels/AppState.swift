@@ -13,7 +13,7 @@ public final class AppState: ObservableObject {
     @Published var statusMessage = "Ready — Press ⌘⇧S to start"
     @Published var hasAPIKey = false
     @Published var autoCopyEnabled = true
-    @Published var autoPasteEnabled = false
+    @Published var autoPasteEnabled = true
 
     // MARK: - History & Stats
 
@@ -147,7 +147,7 @@ public final class AppState: ObservableObject {
             statusMessage = "✅ Copied to clipboard"
 
             if autoPasteEnabled {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [self] in
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [self] in
                     clipboard.pasteToFrontmostApp()
                 }
             }
