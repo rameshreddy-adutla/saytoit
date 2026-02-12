@@ -33,7 +33,7 @@ public final class HotkeyManager: HotkeyManagerProtocol, @unchecked Sendable {
     private var shortcut: Shortcut
     private var handler: (@Sendable () -> Void)?
     private var hotkeyRef: EventHotKeyRef?
-    private static var instance: HotkeyManager?
+    fileprivate static var instance: HotkeyManager?
 
     public init(shortcut: Shortcut = .default) {
         self.shortcut = shortcut
