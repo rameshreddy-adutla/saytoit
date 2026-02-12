@@ -69,10 +69,18 @@ jobs:
 
       - name: Create DMG
         run: |
-          mkdir -p dmg-staging
-          cp -r SayToIt.app dmg-staging/
-          ln -s /Applications dmg-staging/Applications
-          hdiutil create -volname "SayToIt" -srcfolder dmg-staging -ov -format UDZO SayToIt-macOS.dmg
+          brew install create-dmg
+          create-dmg \
+            --volname "SayToIt" \
+            --background "Resources/dmg/background.png" \
+            --window-pos 200 120 \
+            --window-size 660 400 \
+            --icon-size 128 \
+            --icon "SayToIt.app" 180 200 \
+            --app-drop-link 480 200 \
+            --no-internet-enable \
+            "SayToIt-macOS.dmg" \
+            "SayToIt.app"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2

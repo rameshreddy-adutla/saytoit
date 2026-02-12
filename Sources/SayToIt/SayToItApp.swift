@@ -10,12 +10,7 @@ struct SayToItApp: App {
             MenuBarView()
                 .environmentObject(appState)
         } label: {
-            Label {
-                Text("SayToIt")
-            } icon: {
-                Image(systemName: appState.isRecording ? "waveform.circle.fill" : "waveform.circle")
-                    .symbolRenderingMode(.hierarchical)
-            }
+            Image(systemName: appState.isRecording ? "waveform" : "mic.fill")
         }
         .menuBarExtraStyle(.window)
 
