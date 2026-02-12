@@ -75,9 +75,10 @@ jobs:
             --background "Resources/dmg/background.png" \
             --window-pos 200 120 \
             --window-size 660 400 \
-            --icon-size 128 \
-            --icon "SayToIt.app" 180 200 \
-            --app-drop-link 480 200 \
+            --icon-size 160 \
+            --text-size 14 \
+            --icon "SayToIt.app" 165 190 \
+            --app-drop-link 495 190 \
             --no-internet-enable \
             "SayToIt-macOS.dmg" \
             "SayToIt.app"
