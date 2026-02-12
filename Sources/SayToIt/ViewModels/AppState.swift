@@ -15,6 +15,13 @@ public final class AppState: ObservableObject {
     @Published var autoCopyEnabled = true
     @Published var autoPasteEnabled = false
 
+    // MARK: - History & Stats
+
+    @Published var history: [HistoryItem] = []
+    @Published var totalSessions: Int = 0
+    @Published var totalRecordingTime: TimeInterval = 0
+    var recordingStartTime: Date?
+
     // MARK: - Services
 
     private let audioCapture: AudioCaptureService
@@ -63,6 +70,7 @@ public final class AppState: ObservableObject {
         currentTranscript = ""
         interimText = ""
         statusMessage = "🎙️ Recording..."
+        recordingStartTime = Date()
 
         let config = DeepgramClient.Configuration(apiKey: apiKey)
         let client = DeepgramClient(configuration: config)
@@ -110,6 +118,16 @@ public final class AppState: ObservableObject {
         guard isRecording else { return }
         isRecording = false
 
+        // Calculate session duration
+        let duration: TimeInterval
+        if let start = recordingStartTime {
+            duration = Date().timeIntervalSince(start)
+            totalRecordingTime += duration
+        } else {
+            duration = 0
+        }
+        recordingStartTime = nil
+
         audioCapture.stopCapture()
 
         Task {
@@ -135,6 +153,12 @@ public final class AppState: ObservableObject {
             }
         } else if finalText.isEmpty {
             statusMessage = "Ready — Press ⌘⇧S to start"
+        }
+
+        // Record to history
+        if !finalText.isEmpty {
+            totalSessions += 1
+            history.append(HistoryItem(text: finalText, duration: duration))
         }
     }
 

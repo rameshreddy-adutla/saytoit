@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Main menu bar popover view.
+/// Main menu bar popover view — quick access panel.
 struct MenuBarView: View {
     @EnvironmentObject var appState: AppState
     @Environment(\.openWindow) private var openWindow
@@ -30,7 +30,6 @@ struct MenuBarView: View {
             HStack {
                 if !appState.hasAPIKey {
                     Button {
-                        openWindow(id: "settings")
                         NSApp.activate(ignoringOtherApps: true)
                     } label: {
                         HStack(spacing: 6) {
@@ -67,13 +66,11 @@ struct MenuBarView: View {
                     .controlSize(.small)
                 }
 
-                Button {
-                    openWindow(id: "settings")
+                Button("Open Main Window") {
                     NSApp.activate(ignoringOtherApps: true)
-                } label: {
-                    Image(systemName: "gear")
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.bordered)
+                .controlSize(.small)
 
                 Button {
                     NSApplication.shared.terminate(nil)
