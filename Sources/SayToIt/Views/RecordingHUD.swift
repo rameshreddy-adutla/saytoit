@@ -1,113 +1,88 @@
 import AppKit
 import SwiftUI
 
-// MARK: - Fixed-size constants
-
-private let hudWidth: CGFloat = 520
-private let hudHeight: CGFloat = 220
-
 // MARK: - HUD Phase
 
-enum HUDPhase {
+enum HUDPhase: Equatable {
     case recording
     case processing
     case delivering
     case success
     case failure(String)
-    
+
     var color: Color {
         switch self {
-        case .recording: return Color.red
+        case .recording: return .red
         case .processing: return Color.brandAccent
-        case .delivering: return Color.green
-        case .success: return Color.green
+        case .delivering: return .green
+        case .success: return .green
         case .failure: return Color.brandCoral
         }
     }
-    
-    var icon: String {
-        switch self {
-        case .recording: return "waveform"
-        case .processing: return "waveform.circle"
-        case .delivering: return "arrow.up.doc"
-        case .success: return "checkmark.circle.fill"
-        case .failure: return "exclamationmark.triangle.fill"
-        }
-    }
-    
-    var title: String {
+
+    var headline: String {
         switch self {
         case .recording: return "Recording"
-        case .processing: return "Transcribing..."
-        case .delivering: return "Pasting..."
-        case .success: return "Success"
+        case .processing: return "Transcribing…"
+        case .delivering: return "Pasting…"
+        case .success: return "Done"
         case .failure: return "Failed"
+        }
+    }
+
+    var isTerminal: Bool {
+        switch self {
+        case .success, .failure: return true
+        default: return false
         }
     }
 }
 
-/// Floating HUD window that appears during recording — shows different phases
-/// with appropriate visuals for recording, processing, delivering, success, and failure.
+// MARK: - HUD Window Presenter
+
+/// Full-screen transparent NSPanel — the SwiftUI overlay floats at the bottom.
+/// This approach prevents bouncing because the window never resizes.
 @MainActor
 final class RecordingHUD {
     private var panel: NSPanel?
-    private var hostingController: NSHostingController<RecordingHUDView>?
-    private var currentPhase: HUDPhase = .recording
+    private var hostingController: NSHostingController<HUDWindowContent>?
 
     func show(appState: AppState, phase: HUDPhase) {
-        currentPhase = phase
-        
         if panel != nil {
-            // Update existing view
-            hostingController?.rootView = RecordingHUDView(appState: appState, phase: phase)
+            // Already showing — just update the view
+            hostingController?.rootView = HUDWindowContent(appState: appState, phase: phase)
             return
         }
 
-        let view = RecordingHUDView(appState: appState, phase: phase)
-        let hosting = NSHostingController(rootView: view)
-        // Lock the hosting view to a fixed size — prevents layout shifts
-        hosting.view.setFrameSize(NSSize(width: hudWidth, height: hudHeight))
-        hosting.view.autoresizingMask = []
+        let content = HUDWindowContent(appState: appState, phase: phase)
+        let hosting = NSHostingController(rootView: content)
 
+        // Use the FULL screen frame so the panel never needs to resize
+        let frame = NSScreen.main?.frame ?? NSRect(x: 0, y: 0, width: 1280, height: 800)
         let panel = NSPanel(
-            contentRect: NSRect(x: 0, y: 0, width: hudWidth, height: hudHeight),
+            contentRect: frame,
             styleMask: [.borderless, .nonactivatingPanel],
             backing: .buffered,
             defer: false
         )
         panel.isOpaque = false
         panel.backgroundColor = .clear
-        panel.hasShadow = true
+        panel.hasShadow = false
         panel.ignoresMouseEvents = true
         panel.hidesOnDeactivate = false
-        panel.level = .floating
+        panel.level = .statusBar
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .transient]
         panel.contentViewController = hosting
-        // Lock panel size
-        panel.minSize = NSSize(width: hudWidth, height: hudHeight)
-        panel.maxSize = NSSize(width: hudWidth, height: hudHeight)
-
-        // Position at bottom center of main screen
-        if let screen = NSScreen.main {
-            let screenFrame = screen.visibleFrame
-            let x = screenFrame.midX - hudWidth / 2
-            let y = screenFrame.minY + 80
-            panel.setFrame(NSRect(x: x, y: y, width: hudWidth, height: hudHeight), display: true)
-        }
 
         panel.orderFrontRegardless()
         self.panel = panel
         self.hostingController = hosting
     }
-    
+
     func updatePhase(_ phase: HUDPhase) {
-        currentPhase = phase
         guard let hosting = hostingController else { return }
-        
-        // Update the view with new phase
-        if let appState = (hosting.rootView as? RecordingHUDView)?.appState {
-            hosting.rootView = RecordingHUDView(appState: appState, phase: phase)
-        }
+        let currentRoot = hosting.rootView
+        hosting.rootView = HUDWindowContent(appState: currentRoot.appState, phase: phase)
     }
 
     func dismiss() {
@@ -117,132 +92,161 @@ final class RecordingHUD {
     }
 }
 
-/// The SwiftUI view rendered inside the floating HUD panel.
-struct RecordingHUDView: View {
+// MARK: - Window Content (full-screen transparent container)
+
+struct HUDWindowContent: View {
     @ObservedObject var appState: AppState
     let phase: HUDPhase
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Header: phase indicator + title + timer/spinner
-            HStack(spacing: 14) {
-                phaseIndicator
-                
-                Text(phase.title)
-                    .font(.system(size: 20, weight: .semibold))
-                    .foregroundStyle(.white)
-                
-                Spacer()
-                
-                trailingContent
-            }
-            .padding(.bottom, 16)
+        ZStack {
+            Color.clear
+            HUDOverlayView(appState: appState, phase: phase)
+                .padding(.horizontal, 72)
+                .padding(.bottom, 48)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+        }
+        .ignoresSafeArea()
+    }
+}
 
-            // Divider
-            Rectangle()
-                .fill(.white.opacity(0.15))
-                .frame(height: 1)
-                .padding(.bottom, 14)
+// MARK: - HUD Overlay (the visible pill)
 
-            // Content area
-            contentArea
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+struct HUDOverlayView: View {
+    @ObservedObject var appState: AppState
+    let phase: HUDPhase
 
-            // Bottom hint
-            if case .recording = phase {
-                HStack {
-                    Spacer()
-                    Text("⌘⇧S to stop")
-                        .font(.system(size: 12))
-                        .foregroundStyle(.white.opacity(0.35))
+    private var hasTranscript: Bool {
+        !appState.currentTranscript.isEmpty || !appState.interimText.isEmpty
+    }
+
+    var body: some View {
+        VStack(spacing: 12) {
+            animatedGlyph
+
+            VStack(spacing: 4) {
+                Text(phase.headline)
+                    .font(.headline)
+                    .foregroundStyle(headlineColor)
+
+                if case .failure(let msg) = phase {
+                    Text(msg)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(2)
                 }
             }
+
+            // Audio level meter during recording
+            if case .recording = phase {
+                AudioLevelMeter(level: appState.audioLevel)
+                    .frame(width: 120, height: 4)
+                    .padding(.top, 2)
+            }
+
+            // Elapsed timer (not on terminal phases)
+            if !phase.isTerminal {
+                Text(elapsedText)
+                    .font(.caption.monospacedDigit())
+                    .foregroundStyle(.secondary)
+            }
+
+            // Live transcript during recording
+            if case .recording = phase, hasTranscript {
+                liveTranscriptView
+                    .padding(.top, 4)
+            }
+
+            // Stop hint during recording
+            if case .recording = phase {
+                Text("⌘⇧S to stop")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+                    .padding(.top, 2)
+            }
         }
-        .padding(24)
-        .frame(width: hudWidth, height: hudHeight)
-        .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color(nsColor: NSColor(red: 0.06, green: 0.06, blue: 0.1, alpha: 0.92)))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .stroke(phase.color.opacity(0.5), lineWidth: 1.5)
-        )
+        .padding(.horizontal, 24)
+        .padding(.vertical, 16)
+        .background(hudBackground)
+        .overlay(hudStroke)
+        .shadow(color: .black.opacity(0.25), radius: 18, x: 0, y: 12)
+        .animation(.spring(response: 0.25, dampingFraction: 0.85), value: phase)
+        .frame(maxWidth: hasTranscript ? 420 : 280)
     }
-    
+
+    // MARK: - Background + Stroke
+
+    private var hudBackground: some View {
+        RoundedRectangle(cornerRadius: 20, style: .continuous)
+            .fill(.thickMaterial)
+            .overlay(phaseTint)
+    }
+
+    private var hudStroke: some View {
+        RoundedRectangle(cornerRadius: 20, style: .continuous)
+            .stroke(phase.color.opacity(0.45), lineWidth: phase.isTerminal ? 2 : 1)
+    }
+
     @ViewBuilder
-    private var phaseIndicator: some View {
+    private var phaseTint: some View {
+        if case .failure = phase {
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(phase.color.opacity(0.15))
+        }
+    }
+
+    private var headlineColor: Color {
+        if case .failure = phase { return phase.color }
+        return .primary
+    }
+
+    // MARK: - Animated Glyph
+
+    @ViewBuilder
+    private var animatedGlyph: some View {
         switch phase {
-        case .recording:
-            BlinkingDot()
-        case .processing, .delivering:
-            ProgressView()
-                .controlSize(.small)
-                .tint(.white)
+        case .failure:
+            TimelineView(.animation) { context in
+                let t = context.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 1)
+                let s = 0.9 + (t < 0.5 ? t : 1 - t) * 0.35
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.system(size: 32, weight: .bold))
+                    .foregroundStyle(phase.color.gradient)
+                    .scaleEffect(s)
+                    .shadow(color: phase.color.opacity(0.45), radius: 10, x: 0, y: 6)
+            }
         case .success:
             Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 20))
+                .font(.system(size: 28, weight: .semibold))
                 .foregroundStyle(Color.green)
-        case .failure:
-            Image(systemName: "exclamationmark.triangle.fill")
-                .font(.system(size: 20))
-                .foregroundStyle(Color.brandCoral)
-        }
-    }
-    
-    @ViewBuilder
-    private var trailingContent: some View {
-        switch phase {
-        case .recording:
-            Text(elapsedText)
-                .font(.system(size: 18, weight: .medium, design: .monospaced))
-                .foregroundStyle(.white.opacity(0.8))
-        case .processing, .delivering:
-            EmptyView()
-        case .success, .failure:
-            EmptyView()
-        }
-    }
-    
-    @ViewBuilder
-    private var contentArea: some View {
-        switch phase {
-        case .recording:
-            // Live transcript area
-            VStack(spacing: 12) {
-                AudioLevelBar(level: appState.audioLevel)
-                    .frame(height: 8)
-                    .padding(.bottom, 4)
-                
-                Text(liveText)
-                    .font(.system(size: 16))
-                    .foregroundStyle(.white.opacity(liveText == "Listening…" ? 0.4 : 0.9))
-                    .italic(liveText == "Listening…")
-                    .lineLimit(3)
-                    .truncationMode(.head)
-                    .animation(.easeInOut(duration: 0.15), value: liveText)
+                .shadow(color: Color.green.opacity(0.3), radius: 6, x: 0, y: 4)
+        default:
+            // Pulsing colored dot for recording/processing/delivering
+            TimelineView(.animation) { context in
+                let t = context.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 1)
+                let s = 0.9 + (t < 0.5 ? t : 1 - t) * 0.4
+                Circle()
+                    .fill(phase.color.gradient)
+                    .frame(width: 18, height: 18)
+                    .scaleEffect(s)
+                    .shadow(color: phase.color.opacity(0.4), radius: 6, x: 0, y: 4)
             }
-        case .processing:
-            Text("Processing your transcription...")
-                .font(.system(size: 16))
-                .foregroundStyle(.white.opacity(0.7))
-                .frame(maxWidth: .infinity, alignment: .center)
-        case .delivering:
-            Text("Pasting to frontmost app...")
-                .font(.system(size: 16))
-                .foregroundStyle(.white.opacity(0.7))
-                .frame(maxWidth: .infinity, alignment: .center)
-        case .success:
-            Text("Transcription complete!")
-                .font(.system(size: 16))
-                .foregroundStyle(.white.opacity(0.9))
-                .frame(maxWidth: .infinity, alignment: .center)
-        case .failure(let message):
-            Text(message)
-                .font(.system(size: 16))
-                .foregroundStyle(Color.brandCoral.opacity(0.9))
-                .frame(maxWidth: .infinity, alignment: .center)
         }
+    }
+
+    // MARK: - Live Transcript
+
+    private var liveTranscriptView: some View {
+        let text = liveText
+        let isFinal = appState.interimText.isEmpty && !appState.currentTranscript.isEmpty
+        return Text(text)
+            .font(isFinal ? .callout : .callout.italic())
+            .fontWeight(isFinal ? .regular : .light)
+            .foregroundStyle(isFinal ? .primary : .secondary)
+            .lineLimit(2)
+            .truncationMode(.head)
+            .frame(maxWidth: 360)
+            .animation(.easeInOut(duration: 0.2), value: text)
     }
 
     private var liveText: String {
@@ -251,62 +255,48 @@ struct RecordingHUDView: View {
             if !text.isEmpty { text += " " }
             text += appState.interimText
         }
-        if text.isEmpty { return "Listening…" }
         if text.count > 200 {
             return "…" + String(text.suffix(200))
         }
         return text
     }
 
+    // MARK: - Timer
+
     private var elapsedText: String {
         guard let start = appState.recordingStartTime else { return "00:00" }
-        let elapsed = Date().timeIntervalSince(start)
-        let minutes = Int(elapsed) / 60
-        let seconds = Int(elapsed) % 60
-        return String(format: "%02d:%02d", minutes, seconds)
+        let elapsed = max(Date().timeIntervalSince(start), 0)
+        let totalHundredths = Int((elapsed * 100).rounded())
+        let minutes = totalHundredths / 6000
+        let seconds = (totalHundredths / 100) % 60
+        let hundredths = totalHundredths % 100
+        if minutes > 0 {
+            return String(format: "%02d:%02d.%02d", minutes, seconds, hundredths)
+        }
+        return String(format: "%02d.%02ds", seconds, hundredths)
     }
 }
 
-/// Classic blinking red recording dot — larger and more visible.
-struct BlinkingDot: View {
-    @State private var isOn = true
+// MARK: - Audio Level Meter
 
-    var body: some View {
-        Circle()
-            .fill(Color.red)
-            .frame(width: 18, height: 18)
-            .shadow(color: Color.red.opacity(0.7), radius: 10)
-            .opacity(isOn ? 1 : 0.15)
-            .onAppear {
-                withAnimation(.easeInOut(duration: 0.6).repeatForever(autoreverses: true)) {
-                    isOn = false
-                }
-            }
-    }
-}
-
-/// Audio level bar that animates based on input level.
-struct AudioLevelBar: View {
+struct AudioLevelMeter: View {
     let level: Float
-    
+
     var body: some View {
-        GeometryReader { geometry in
+        GeometryReader { geo in
             ZStack(alignment: .leading) {
-                // Background
-                RoundedRectangle(cornerRadius: 4)
-                    .fill(.white.opacity(0.1))
-                
-                // Active level
-                RoundedRectangle(cornerRadius: 4)
+                Capsule()
+                    .fill(.quaternary)
+                Capsule()
                     .fill(
                         LinearGradient(
-                            colors: [Color.green, Color.yellow, Color.red],
+                            colors: [Color.green, Color.yellow, Color.orange],
                             startPoint: .leading,
                             endPoint: .trailing
                         )
                     )
-                    .frame(width: geometry.size.width * CGFloat(min(max(level, 0), 1)))
-                    .animation(.easeOut(duration: 0.1), value: level)
+                    .frame(width: geo.size.width * CGFloat(min(max(level, 0.02), 1)))
+                    .animation(.easeOut(duration: 0.08), value: level)
             }
         }
     }
