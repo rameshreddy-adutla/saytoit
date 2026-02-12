@@ -25,7 +25,7 @@ struct DashboardView: View {
             RoundedRectangle(cornerRadius: 16)
                 .fill(
                     LinearGradient(
-                        colors: [.brandNavy, .brandNavyLight, .brandTeal.opacity(0.3)],
+                        colors: [Color.brandNavy, Color.brandNavyLight, Color.brandTeal.opacity(0.3)],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
@@ -41,7 +41,7 @@ struct DashboardView: View {
 
                         Image(systemName: appState.isRecording ? "stop.fill" : "mic.fill")
                             .font(.system(size: 32))
-                            .foregroundStyle(appState.isRecording ? .red : .brandTeal)
+                            .foregroundStyle(appState.isRecording ? .red : Color.brandTeal)
                     }
                 }
                 .buttonStyle(.plain)
@@ -54,7 +54,7 @@ struct DashboardView: View {
                 if !appState.hasAPIKey {
                     Text("Add an API key in Settings to get started")
                         .font(.caption)
-                        .foregroundStyle(.brandCoral)
+                        .foregroundStyle(Color.brandCoral)
                 }
             }
         }

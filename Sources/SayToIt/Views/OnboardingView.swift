@@ -63,7 +63,7 @@ struct OnboardingView: View {
         VStack(spacing: 20) {
             Image(systemName: "mic.circle.fill")
                 .font(.system(size: 72))
-                .foregroundStyle(.brandTeal)
+                .foregroundStyle(Color.brandTeal)
 
             Text("Welcome to SayToIt")
                 .font(.largeTitle.bold())
@@ -78,7 +78,7 @@ struct OnboardingView: View {
         VStack(spacing: 20) {
             Image(systemName: "mic.badge.plus")
                 .font(.system(size: 56))
-                .foregroundStyle(.brandCoral)
+                .foregroundStyle(Color.brandCoral)
 
             Text("Microphone Access")
                 .font(.title.bold())
@@ -108,7 +108,7 @@ struct OnboardingView: View {
         VStack(spacing: 20) {
             Image(systemName: "key.fill")
                 .font(.system(size: 56))
-                .foregroundStyle(.brandCoral)
+                .foregroundStyle(Color.brandCoral)
 
             Text("Deepgram API Key")
                 .font(.title.bold())

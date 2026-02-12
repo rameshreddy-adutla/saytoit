@@ -19,7 +19,7 @@ struct MainView: View {
                     HStack(spacing: 6) {
                         Image(systemName: appState.isRecording ? "stop.circle.fill" : "mic.circle.fill")
                             .font(.title3)
-                            .foregroundStyle(appState.isRecording ? .red : .brandTeal)
+                            .foregroundStyle(appState.isRecording ? .red : Color.brandTeal)
                         Text(appState.isRecording ? "Stop" : "Record")
                     }
                 }
