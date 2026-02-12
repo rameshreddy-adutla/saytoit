@@ -17,9 +17,9 @@ struct SayToItApp: App {
                 }
             }
             .environmentObject(appState)
+            .tint(Color.brandTeal)
         }
         .defaultSize(width: 1080, height: 720)
-        .tint(.brandTeal)
 
         MenuBarExtra {
             MenuBarView()
