@@ -61,6 +61,9 @@ jobs:
           </plist>
           PLIST
 
+      - name: Ad-hoc code sign
+        run: codesign --force --deep -s - SayToIt.app
+
       - name: Create DMG
         run: |
           mkdir -p dmg-staging
