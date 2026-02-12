@@ -31,6 +31,8 @@ public final class AppState: ObservableObject {
     private var deepgramClient: DeepgramClient?
     private var transcriptionTask: Task<Void, Never>?
     private var audioStreamTask: Task<Void, Never>?
+    private let recordingHUD = RecordingHUD()
+    private var hudTimerTask: Task<Void, Never>?
 
     // MARK: - Init
 
@@ -71,6 +73,16 @@ public final class AppState: ObservableObject {
         interimText = ""
         statusMessage = "🎙️ Recording..."
         recordingStartTime = Date()
+
+        // Show floating HUD
+        recordingHUD.show(appState: self)
+        // Timer to keep HUD elapsed time updating
+        hudTimerTask = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: 500_000_000)
+                self?.objectWillChange.send()
+            }
+        }
 
         let config = DeepgramClient.Configuration(apiKey: apiKey)
         let client = DeepgramClient(configuration: config)
@@ -117,6 +129,11 @@ public final class AppState: ObservableObject {
     func stopRecording() {
         guard isRecording else { return }
         isRecording = false
+
+        // Dismiss floating HUD
+        recordingHUD.dismiss()
+        hudTimerTask?.cancel()
+        hudTimerTask = nil
 
         // Calculate session duration
         let duration: TimeInterval
