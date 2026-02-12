@@ -72,7 +72,7 @@ struct HistoryView: View {
                 .foregroundStyle(Color.secondary)
             Text(showErrorsOnly ? "All sessions completed successfully" : "Your transcription history will appear here.")
                 .font(.body)
-                .foregroundStyle(Color.tertiary)
+                .foregroundStyle(.tertiary)
         }
     }
 

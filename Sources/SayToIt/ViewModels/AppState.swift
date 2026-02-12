@@ -37,9 +37,6 @@ public final class AppState: ObservableObject {
     
     var recordingStartTime: Date?
 
-    
-    var recordingStartTime: Date?
-
     // MARK: - Services
 
     private let audioCapture: AudioCaptureService

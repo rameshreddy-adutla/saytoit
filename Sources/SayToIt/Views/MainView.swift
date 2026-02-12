@@ -110,7 +110,7 @@ struct PlaceholderView: View {
                 .foregroundStyle(Color.secondary)
             Text("Coming soon")
                 .font(.body)
-                .foregroundStyle(Color.tertiary)
+                .foregroundStyle(.tertiary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
