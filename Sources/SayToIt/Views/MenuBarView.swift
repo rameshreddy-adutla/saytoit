@@ -3,19 +3,38 @@ import SwiftUI
 /// Main menu bar popover view — quick access panel.
 struct MenuBarView: View {
     @EnvironmentObject var appState: AppState
+    @EnvironmentObject var historyManager: HistoryManager
     @Environment(\.openWindow) private var openWindow
 
     var body: some View {
         VStack(spacing: 12) {
-            // Header
-            HStack {
+            // Header with mode badge
+            HStack(spacing: 12) {
                 Text("SayToIt")
                     .font(.headline)
+                
+                // Status badge
+                HStack(spacing: 6) {
+                    Circle()
+                        .fill(statusColor)
+                        .frame(width: 6, height: 6)
+                    Text(statusText)
+                        .font(.caption2)
+                        .foregroundStyle(Color.secondary)
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(.ultraThinMaterial)
+                .cornerRadius(8)
+                
                 Spacer()
-                Text(appState.statusMessage)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
+            }
+            
+            // Quick stats
+            HStack(spacing: 16) {
+                quickStat(icon: "waveform", value: "\(historyManager.totalSessions)")
+                quickStat(icon: "clock", value: formattedTime(historyManager.totalRecordingTime))
+                quickStat(icon: "chart.line.uptrend.xyaxis", value: formattedTime(historyManager.averageSessionLength))
             }
 
             Divider()
@@ -27,30 +46,26 @@ struct MenuBarView: View {
             Divider()
 
             // Controls
-            HStack {
+            HStack(spacing: 8) {
                 if !appState.hasAPIKey {
                     Button {
-                        NSApp.activate(ignoringOtherApps: true)
-                        for window in NSApp.windows where window.canBecomeKey {
-                            window.makeKeyAndOrderFront(nil)
-                            break
-                        }
+                        openMainWindow()
                     } label: {
                         HStack(spacing: 6) {
                             Image(systemName: "key.fill")
-                                .font(.title2)
-                                .foregroundStyle(.orange)
+                                .font(.body)
+                                .foregroundStyle(Color.orange)
                             Text("Add API Key")
                                 .font(.body)
                         }
                     }
                     .buttonStyle(.plain)
                 } else {
-                    Button(action: appState.toggleRecording) {
+                    Button(action: appState.toggleRecordingFromUI) {
                         HStack(spacing: 6) {
                             Image(systemName: appState.isRecording ? "stop.circle.fill" : "mic.circle.fill")
-                                .font(.title2)
-                                .foregroundStyle(appState.isRecording ? .red : .accentColor)
+                                .font(.body)
+                                .foregroundStyle(appState.isRecording ? Color.red : Color.brandAccent)
                             Text(appState.isRecording ? "Stop" : "Record")
                                 .font(.body)
                         }
@@ -70,14 +85,8 @@ struct MenuBarView: View {
                     .controlSize(.small)
                 }
 
-                Button("Open Main Window") {
-                    NSApp.activate(ignoringOtherApps: true)
-                    if let window = NSApp.windows.first(where: { $0.title.contains("SayToIt") || $0.isKeyWindow || $0.canBecomeKey }) {
-                        window.makeKeyAndOrderFront(nil)
-                    } else {
-                        // No window found — open a new one
-                        NSApp.sendAction(Selector(("newWindowForTab:")), to: nil, from: nil)
-                    }
+                Button("Open") {
+                    openMainWindow()
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
@@ -91,6 +100,58 @@ struct MenuBarView: View {
             }
         }
         .padding()
-        .frame(width: 380, height: 320)
+        .frame(width: 380, height: 340)
+    }
+    
+    private func quickStat(icon: String, value: String) -> some View {
+        HStack(spacing: 4) {
+            Image(systemName: icon)
+                .font(.caption2)
+                .foregroundStyle(Color.brandAccent)
+            Text(value)
+                .font(.caption2.weight(.medium))
+        }
+    }
+    
+    private var statusText: String {
+        switch appState.state {
+        case .idle: return "Ready"
+        case .recording: return "Recording"
+        case .processing: return "Processing"
+        case .delivering: return "Delivering"
+        case .completed: return "Done"
+        case .failed: return "Failed"
+        }
+    }
+    
+    private var statusColor: Color {
+        switch appState.state {
+        case .idle: return Color.secondary
+        case .recording: return Color.red
+        case .processing: return Color.brandAccent
+        case .delivering: return Color.green
+        case .completed: return Color.green
+        case .failed: return Color.brandCoral
+        }
+    }
+    
+    private func openMainWindow() {
+        NSApp.activate(ignoringOtherApps: true)
+        if let window = NSApp.windows.first(where: { $0.title.contains("SayToIt") || $0.isKeyWindow || $0.canBecomeKey }) {
+            window.makeKeyAndOrderFront(nil)
+        } else {
+            NSApp.sendAction(Selector(("newWindowForTab:")), to: nil, from: nil)
+        }
+    }
+    
+    private func formattedTime(_ interval: TimeInterval) -> String {
+        let minutes = Int(interval) / 60
+        let seconds = Int(interval) % 60
+        if minutes > 0 {
+            return String(format: "%dm", minutes)
+        } else {
+            return String(format: "%ds", seconds)
+        }
     }
 }
+

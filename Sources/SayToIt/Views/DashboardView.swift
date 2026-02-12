@@ -1,151 +1,224 @@
 import SwiftUI
+import AVFoundation
 
 /// Dashboard with hero header, stats, and live transcription preview.
 struct DashboardView: View {
     @EnvironmentObject var appState: AppState
+    @EnvironmentObject var historyManager: HistoryManager
 
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
                 heroHeader
-                statsRow
-                livePreview
-                recentSession
+                
+                HStack(spacing: 16) {
+                    permissionsCard
+                    insightsCard
+                }
+                
+                if let lastItem = historyManager.items.last {
+                    recentSessionCard(lastItem)
+                }
+                
                 Spacer()
             }
             .padding(24)
         }
-        .background(Color.brandNavy.opacity(0.3))
+        .background(
+            LinearGradient(
+                colors: [
+                    Color(nsColor: NSColor(red: 0.06, green: 0.06, blue: 0.1, alpha: 1.0)),
+                    Color(nsColor: NSColor(red: 0.02, green: 0.02, blue: 0.05, alpha: 1.0))
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        )
     }
 
     // MARK: - Hero Header
 
     private var heroHeader: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 16)
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
                 .fill(
                     LinearGradient(
-                        colors: [Color.brandNavy, Color.brandNavyLight, Color.brandTeal.opacity(0.3)],
+                        colors: [
+                            Color.brandAccent.opacity(0.3),
+                            Color.brandAccentDeep.opacity(0.4),
+                            Color.brandLagoon.opacity(0.2)
+                        ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
                 )
-                .frame(height: 180)
+                .frame(height: 220)
 
-            VStack(spacing: 16) {
-                Button(action: appState.toggleRecording) {
+            VStack(spacing: 20) {
+                // Record button
+                Button(action: appState.toggleRecordingFromUI) {
                     ZStack {
                         Circle()
-                            .fill(appState.isRecording ? Color.red.opacity(0.2) : Color.brandTeal.opacity(0.2))
-                            .frame(width: 80, height: 80)
+                            .fill(appState.isRecording ? Color.red.opacity(0.2) : Color.brandAccent.opacity(0.2))
+                            .frame(width: 88, height: 88)
 
                         Image(systemName: appState.isRecording ? "stop.fill" : "mic.fill")
-                            .font(.system(size: 32))
-                            .foregroundStyle(appState.isRecording ? .red : Color.brandTeal)
+                            .font(.system(size: 36))
+                            .foregroundStyle(appState.isRecording ? Color.red : Color.brandAccent)
                     }
                 }
                 .buttonStyle(.plain)
                 .disabled(!appState.hasAPIKey)
 
+                // Status text
                 Text(appState.isRecording ? "Recording..." : "Tap to Record")
-                    .font(.headline)
+                    .font(.title3.weight(.semibold))
                     .foregroundStyle(.white)
 
-                if !appState.hasAPIKey {
-                    Text("Add an API key in Settings to get started")
-                        .font(.caption)
-                        .foregroundStyle(Color.brandCoral)
+                // Live preview during recording
+                if appState.isRecording && !appState.livePreview.isEmpty {
+                    Text(appState.livePreview)
+                        .font(.body)
+                        .foregroundStyle(.white.opacity(0.8))
+                        .lineLimit(2)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 32)
+                        .animation(.easeInOut, value: appState.livePreview)
+                }
+
+                // Stats chips
+                HStack(spacing: 12) {
+                    statsChip(icon: "waveform", value: "\(historyManager.totalSessions)", color: Color.brandAccent)
+                    statsChip(icon: "clock", value: formattedTime(historyManager.totalRecordingTime), color: Color.brandAccentWarm)
+                    statsChip(icon: "chart.line.uptrend.xyaxis", value: formattedTime(historyManager.averageSessionLength), color: Color.brandLagoon)
                 }
             }
+            .padding(.vertical, 24)
         }
     }
-
-    // MARK: - Stats
-
-    private var statsRow: some View {
-        HStack(spacing: 16) {
-            statCard(title: "Sessions", value: "\(appState.totalSessions)", icon: "waveform", color: .brandTeal)
-            statCard(title: "Recording Time", value: formattedTime(appState.totalRecordingTime), icon: "clock", color: .brandCoral)
-            statCard(title: "Microphone", value: micStatus, icon: micIcon, color: micColor)
-        }
-    }
-
-    private func statCard(title: String, value: String, icon: String, color: Color) -> some View {
-        VStack(spacing: 8) {
+    
+    private func statsChip(icon: String, value: String, color: Color) -> some View {
+        HStack(spacing: 6) {
             Image(systemName: icon)
-                .font(.title2)
+                .font(.caption)
                 .foregroundStyle(color)
             Text(value)
-                .font(.title3.bold())
-            Text(title)
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .font(.caption.weight(.medium))
+                .foregroundStyle(.white)
         }
-        .frame(maxWidth: .infinity)
-        .padding()
+        .padding(.horizontal, 12)
+        .padding(.vertical, 6)
         .background(.ultraThinMaterial)
         .cornerRadius(12)
     }
 
-    private var micStatus: String {
-        appState.isRecording ? "Active" : "Ready"
-    }
+    // MARK: - Permissions Card
 
-    private var micIcon: String {
-        appState.isRecording ? "mic.fill" : "mic"
-    }
-
-    private var micColor: Color {
-        appState.isRecording ? .green : .secondary
-    }
-
-    // MARK: - Live Preview
-
-    @ViewBuilder
-    private var livePreview: some View {
-        if appState.isRecording || !appState.currentTranscript.isEmpty {
-            VStack(alignment: .leading, spacing: 8) {
-                Label("Live Transcription", systemImage: "text.bubble")
-                    .font(.headline)
-
-                TranscriptionView()
-                    .environmentObject(appState)
-                    .frame(minHeight: 100, maxHeight: 200)
-                    .padding()
-                    .background(.ultraThinMaterial)
-                    .cornerRadius(12)
+    private var permissionsCard: some View {
+        DashboardCard(
+            title: "Permissions",
+            systemImage: "checkmark.shield",
+            tint: Color.green
+        ) {
+            VStack(alignment: .leading, spacing: 12) {
+                permissionRow(
+                    title: "Microphone",
+                    icon: "mic.fill",
+                    status: micPermissionStatus
+                )
+                
+                Divider()
+                
+                permissionRow(
+                    title: "Accessibility",
+                    icon: "hand.raised.fill",
+                    status: accessibilityPermissionStatus
+                )
             }
         }
     }
+    
+    private func permissionRow(title: String, icon: String, status: Bool) -> some View {
+        HStack {
+            Image(systemName: icon)
+                .font(.body)
+                .foregroundStyle(Color.secondary)
+                .frame(width: 24)
+            
+            Text(title)
+                .font(.body)
+            
+            Spacer()
+            
+            Image(systemName: status ? "checkmark.circle.fill" : "xmark.circle.fill")
+                .foregroundStyle(status ? Color.green : Color.red)
+        }
+    }
+    
+    private var micPermissionStatus: Bool {
+        AVCaptureDevice.authorizationStatus(for: .audio) == .authorized
+    }
+    
+    private var accessibilityPermissionStatus: Bool {
+        let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: false]
+        return AXIsProcessTrustedWithOptions(options as CFDictionary)
+    }
 
-    // MARK: - Recent Session
+    // MARK: - Insights Card
 
-    @ViewBuilder
-    private var recentSession: some View {
-        if let last = appState.history.last {
-            VStack(alignment: .leading, spacing: 8) {
-                Label("Recent Session", systemImage: "clock")
-                    .font(.headline)
+    private var insightsCard: some View {
+        DashboardCard(
+            title: "Insights",
+            systemImage: "chart.bar.fill",
+            tint: Color.brandAccent
+        ) {
+            VStack(alignment: .leading, spacing: 12) {
+                insightRow(label: "Total Sessions", value: "\(historyManager.totalSessions)")
+                Divider()
+                insightRow(label: "Recording Time", value: formattedTime(historyManager.totalRecordingTime))
+                Divider()
+                insightRow(label: "Avg. Length", value: formattedTime(historyManager.averageSessionLength))
+            }
+        }
+    }
+    
+    private func insightRow(label: String, value: String) -> some View {
+        HStack {
+            Text(label)
+                .font(.body)
+                .foregroundStyle(Color.secondary)
+            Spacer()
+            Text(value)
+                .font(.body.weight(.semibold))
+                .foregroundStyle(.primary)
+        }
+    }
 
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(last.text)
-                        .lineLimit(3)
-                        .font(.body)
+    // MARK: - Recent Session Card
 
-                    HStack {
-                        Text(last.date, style: .relative)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        Spacer()
-                        Text(formattedTime(last.duration))
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
+    private func recentSessionCard(_ item: HistoryItem) -> some View {
+        DashboardCard(
+            title: "Recent Session",
+            systemImage: "clock.arrow.circlepath",
+            tint: Color.brandAccentWarm
+        ) {
+            VStack(alignment: .leading, spacing: 12) {
+                Text(item.displayText)
+                    .font(.body)
+                    .lineLimit(3)
+                    .foregroundStyle(.primary)
+                
+                Divider()
+                
+                HStack {
+                    Text(item.createdAt, style: .relative)
+                        .font(.caption)
+                        .foregroundStyle(Color.secondary)
+                    Spacer()
+                    Text(formattedTime(item.recordingDuration))
+                        .font(.caption)
+                        .foregroundStyle(Color.secondary)
                 }
-                .padding()
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(.ultraThinMaterial)
-                .cornerRadius(12)
             }
         }
     }
@@ -158,3 +231,49 @@ struct DashboardView: View {
         return String(format: "%dm %02ds", minutes, seconds)
     }
 }
+
+// MARK: - Dashboard Card Component
+
+struct DashboardCard<Content: View>: View {
+    let title: String
+    let systemImage: String
+    let tint: Color
+    let content: Content
+    
+    init(
+        title: String,
+        systemImage: String,
+        tint: Color,
+        @ViewBuilder content: () -> Content
+    ) {
+        self.title = title
+        self.systemImage = systemImage
+        self.tint = tint
+        self.content = content()
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            // Header
+            HStack(spacing: 8) {
+                Image(systemName: systemImage)
+                    .font(.title3)
+                    .foregroundStyle(tint)
+                
+                Text(title)
+                    .font(.headline)
+                    .foregroundStyle(.primary)
+                
+                Spacer()
+            }
+            
+            // Content
+            content
+        }
+        .padding(20)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.ultraThinMaterial)
+        .cornerRadius(16)
+    }
+}
+

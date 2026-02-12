@@ -4,24 +4,36 @@ import SwiftUI
 
 enum SettingsTab: String, CaseIterable, Identifiable {
     case general
+    case transcription
+    case postProcessing
     case apiKeys
+    case shortcuts
+    case permissions
     case about
 
     var id: String { rawValue }
 
     var label: String {
         switch self {
-        case .general: "General"
-        case .apiKeys: "API Keys"
-        case .about: "About"
+        case .general: return "General"
+        case .transcription: return "Transcription"
+        case .postProcessing: return "Post-Processing"
+        case .apiKeys: return "API Keys"
+        case .shortcuts: return "Shortcuts"
+        case .permissions: return "Permissions"
+        case .about: return "About"
         }
     }
 
     var icon: String {
         switch self {
-        case .general: "slider.horizontal.3"
-        case .apiKeys: "key.fill"
-        case .about: "info.circle"
+        case .general: return "slider.horizontal.3"
+        case .transcription: return "waveform"
+        case .postProcessing: return "text.badge.sparkles"
+        case .apiKeys: return "key.fill"
+        case .shortcuts: return "command"
+        case .permissions: return "checkmark.shield"
+        case .about: return "info.circle"
         }
     }
 }
@@ -30,30 +42,42 @@ enum SettingsTab: String, CaseIterable, Identifiable {
 
 enum SidebarItem: Hashable {
     case dashboard
+    case transcription
     case history
+    case voiceOutput
+    case corrections
     case settings(SettingsTab)
 
     var label: String {
         switch self {
-        case .dashboard: "Dashboard"
-        case .history: "History"
-        case .settings(let tab): tab.label
+        case .dashboard: return "Dashboard"
+        case .transcription: return "Transcription"
+        case .history: return "History"
+        case .voiceOutput: return "Voice Output"
+        case .corrections: return "Corrections"
+        case .settings(let tab): return tab.label
         }
     }
 
     var icon: String {
         switch self {
-        case .dashboard: "square.grid.2x2"
-        case .history: "clock.arrow.circlepath"
-        case .settings: "gear"
+        case .dashboard: return "square.grid.2x2"
+        case .transcription: return "waveform.circle"
+        case .history: return "clock.arrow.circlepath"
+        case .voiceOutput: return "speaker.wave.2"
+        case .corrections: return "text.badge.checkmark"
+        case .settings(let tab): return tab.icon
         }
     }
 
     var color: Color {
         switch self {
-        case .dashboard: .brandTeal
-        case .history: .brandCoral
-        case .settings: .secondary
+        case .dashboard: return Color.brandAccent
+        case .transcription: return Color.brandLagoon
+        case .history: return Color.brandAccentWarm
+        case .voiceOutput: return Color.purple
+        case .corrections: return Color.brandAccentDeep
+        case .settings: return Color.secondary
         }
     }
 }
@@ -65,9 +89,12 @@ struct SidebarView: View {
 
     var body: some View {
         List(selection: $selection) {
-            Section("Main") {
+            Section("SayToIt") {
                 sidebarRow(.dashboard)
+                sidebarRow(.transcription)
                 sidebarRow(.history)
+                sidebarRow(.voiceOutput)
+                sidebarRow(.corrections)
             }
 
             Section("Settings") {

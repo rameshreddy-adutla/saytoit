@@ -1,8 +1,10 @@
 import SwiftUI
 
 extension Color {
-    static let brandTeal = Color(red: 0x22 / 255.0, green: 0xC3 / 255.0, blue: 0xDD / 255.0)
-    static let brandCoral = Color(red: 0xF5 / 255.0, green: 0x95 / 255.0, blue: 0x4E / 255.0)
-    static let brandNavy = Color(red: 0x06 / 255.0, green: 0x0D / 255.0, blue: 0x14 / 255.0)
-    static let brandNavyLight = Color(red: 0x0E / 255.0, green: 0x1A / 255.0, blue: 0x2B / 255.0)
+    static let brandAccent = Color(red: 0.18, green: 0.83, blue: 0.75)       // Vibrant teal-lagoon
+    static let brandAccentWarm = Color(red: 1.0, green: 0.55, blue: 0.25)    // Warm orange
+    static let brandAccentDeep = Color(red: 0.12, green: 0.65, blue: 0.58)   // Deep teal
+    static let brandLagoon = Color(red: 0.22, green: 0.88, blue: 0.80)       // Light lagoon
+    static let brandSurface = Color(nsColor: .windowBackgroundColor)          // System surface
+    static let brandCoral = Color(red: 0.95, green: 0.35, blue: 0.25)        // Coral red for alerts
 }

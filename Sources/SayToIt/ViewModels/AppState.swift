@@ -5,21 +5,39 @@ import Combine
 /// Central app state managing recording, transcription, and services.
 @MainActor
 public final class AppState: ObservableObject {
+    // MARK: - Session State
+    
+    enum SessionState: Equatable {
+        case idle
+        case recording
+        case processing
+        case delivering
+        case completed(HistoryItem)
+        case failed(String)
+    }
+    
     // MARK: - Published State
 
-    @Published var isRecording = false
-    @Published var currentTranscript = ""
-    @Published var interimText = ""
+    @Published private(set) var state: SessionState = .idle
+    @Published private(set) var livePreview: String = ""
+    @Published private(set) var audioLevel: Float = 0
+    @Published private(set) var currentTranscript = ""
+    @Published private(set) var interimText = ""
     @Published var statusMessage = "Ready — Press ⌘⇧S to start"
     @Published var hasAPIKey = false
     @Published var autoCopyEnabled = true
     @Published var autoPasteEnabled = true
 
-    // MARK: - History & Stats
+    // MARK: - Computed Properties
+    
+    var isRecording: Bool {
+        if case .recording = state { return true }
+        return false
+    }
+    
+    var recordingStartTime: Date?
 
-    @Published var history: [HistoryItem] = []
-    @Published var totalSessions: Int = 0
-    @Published var totalRecordingTime: TimeInterval = 0
+    
     var recordingStartTime: Date?
 
     // MARK: - Services
@@ -33,6 +51,7 @@ public final class AppState: ObservableObject {
     private var audioStreamTask: Task<Void, Never>?
     private let recordingHUD = RecordingHUD()
     private var hudTimerTask: Task<Void, Never>?
+    private var sessionErrors: [HistoryError] = []
 
     // MARK: - Init
 
@@ -48,6 +67,10 @@ public final class AppState: ObservableObject {
 
     // MARK: - Recording Control
 
+    func toggleRecordingFromUI() {
+        toggleRecording()
+    }
+    
     func toggleRecording() {
         if isRecording {
             stopRecording()
@@ -57,25 +80,29 @@ public final class AppState: ObservableObject {
     }
 
     func startRecording() {
-        guard !isRecording else { return }
+        guard case .idle = state else { return }
         guard hasAPIKey else {
             statusMessage = "⚠️ No API key. Open Settings to add one."
+            state = .failed("No API key configured")
             return
         }
 
         guard let apiKey = try? secureStorage.retrieve(key: SecureStorage.deepgramAPIKeyName) else {
             statusMessage = "⚠️ Failed to read API key"
+            state = .failed("Failed to read API key")
             return
         }
 
-        isRecording = true
+        state = .recording
+        sessionErrors = []
         currentTranscript = ""
         interimText = ""
+        livePreview = ""
         statusMessage = "🎙️ Recording..."
         recordingStartTime = Date()
 
         // Show floating HUD
-        recordingHUD.show(appState: self)
+        recordingHUD.show(appState: self, phase: .recording)
         // Timer to keep HUD elapsed time updating
         hudTimerTask = Task { [weak self] in
             while !Task.isCancelled {
@@ -106,10 +133,12 @@ public final class AppState: ObservableObject {
                     } else {
                         interimText = result.text
                     }
+                    updateLivePreview()
                 }
             } catch {
                 statusMessage = "❌ \(error.localizedDescription)"
-                isRecording = false
+                sessionErrors.append(HistoryError(phase: "transcription", message: error.localizedDescription))
+                state = .failed(error.localizedDescription)
             }
         }
 
@@ -121,25 +150,23 @@ public final class AppState: ObservableObject {
                 }
             } catch {
                 statusMessage = "❌ Audio: \(error.localizedDescription)"
-                isRecording = false
+                sessionErrors.append(HistoryError(phase: "audio_capture", message: error.localizedDescription))
+                state = .failed(error.localizedDescription)
             }
         }
     }
 
     func stopRecording() {
         guard isRecording else { return }
-        isRecording = false
-
-        // Dismiss floating HUD
-        recordingHUD.dismiss()
-        hudTimerTask?.cancel()
-        hudTimerTask = nil
+        state = .processing
+        
+        recordingHUD.updatePhase(.processing)
+        statusMessage = "Processing..."
 
         // Calculate session duration
         let duration: TimeInterval
         if let start = recordingStartTime {
             duration = Date().timeIntervalSince(start)
-            totalRecordingTime += duration
         } else {
             duration = 0
         }
@@ -159,24 +186,58 @@ public final class AppState: ObservableObject {
 
         // Copy final transcript
         let finalText = buildFinalTranscript()
-        if !finalText.isEmpty && autoCopyEnabled {
-            clipboard.copyToClipboard(finalText)
-            statusMessage = "✅ Copied to clipboard"
-
-            if autoPasteEnabled {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [self] in
-                    clipboard.pasteToFrontmostApp()
+        
+        if !finalText.isEmpty {
+            state = .delivering
+            recordingHUD.updatePhase(.delivering)
+            statusMessage = "Delivering..."
+            
+            if autoCopyEnabled {
+                clipboard.copyToClipboard(finalText)
+                
+                if autoPasteEnabled {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+                        self?.clipboard.pasteToFrontmostApp()
+                    }
                 }
             }
-        } else if finalText.isEmpty {
-            statusMessage = "Ready — Press ⌘⇧S to start"
+            
+            // Create history item
+            let item = HistoryItem(
+                rawTranscription: finalText,
+                recordingDuration: duration,
+                modelsUsed: ["deepgram/nova-2"],
+                errors: sessionErrors
+            )
+            
+            state = .completed(item)
+            recordingHUD.updatePhase(.success)
+            statusMessage = "✅ Completed"
+            
+            // Auto-hide HUD after success
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { [weak self] in
+                self?.recordingHUD.dismiss()
+                self?.hudTimerTask?.cancel()
+                self?.hudTimerTask = nil
+                if case .completed = self?.state {
+                    self?.state = .idle
+                }
+            }
+        } else {
+            state = .failed("No transcription captured")
+            recordingHUD.updatePhase(.failure("No audio detected"))
+            statusMessage = "❌ No transcription"
+            
+            // Auto-hide HUD after failure
+            DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) { [weak self] in
+                self?.recordingHUD.dismiss()
+                self?.hudTimerTask?.cancel()
+                self?.hudTimerTask = nil
+                self?.state = .idle
+            }
         }
-
-        // Record to history
-        if !finalText.isEmpty {
-            totalSessions += 1
-            history.append(HistoryItem(text: finalText, duration: duration))
-        }
+        
+        sessionErrors = []
     }
 
     // MARK: - API Key Management
@@ -232,5 +293,14 @@ public final class AppState: ObservableObject {
             text += interimText
         }
         return text.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+    
+    private func updateLivePreview() {
+        var text = currentTranscript
+        if !interimText.isEmpty {
+            if !text.isEmpty { text += " " }
+            text += interimText
+        }
+        livePreview = text
     }
 }
