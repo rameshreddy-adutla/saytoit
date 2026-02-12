@@ -24,14 +24,46 @@ jobs:
         id: version
         run: echo "VERSION=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
 
-      - name: Package
+      - name: Create .app bundle
         run: |
-          mkdir -p release
-          cp -r .build/release/SayToIt release/
-          cd release && zip -r SayToIt-${{ steps.version.outputs.VERSION }}-macOS.zip SayToIt
+          APP="SayToIt.app"
+          mkdir -p "$APP/Contents/MacOS"
+          mkdir -p "$APP/Contents/Resources"
+          cp .build/release/SayToIt "$APP/Contents/MacOS/"
+          cat > "$APP/Contents/Info.plist" << 'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>CFBundleExecutable</key>
+            <string>SayToIt</string>
+            <key>CFBundleIdentifier</key>
+            <string>com.saytoit.app</string>
+            <key>CFBundleName</key>
+            <string>SayToIt</string>
+            <key>CFBundleDisplayName</key>
+            <string>SayToIt</string>
+            <key>CFBundleVersion</key>
+            <string>1</string>
+            <key>CFBundleShortVersionString</key>
+            <string>${{ steps.version.outputs.VERSION }}</string>
+            <key>CFBundlePackageType</key>
+            <string>APPL</string>
+            <key>LSMinimumSystemVersion</key>
+            <string>14.0</string>
+            <key>LSUIElement</key>
+            <true/>
+            <key>NSMicrophoneUsageDescription</key>
+            <string>SayToIt needs microphone access to transcribe your speech.</string>
+            <key>NSHumanReadableCopyright</key>
+            <string>Copyright © 2025 Ramesh Reddy Adutla. MIT License.</string>
+          </dict>
+          </plist>
+          PLIST
+          zip -r SayToIt-macOS.zip SayToIt.app
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: release/SayToIt-${{ steps.version.outputs.VERSION }}-macOS.zip
+          files: SayToIt-macOS.zip
           generate_release_notes: true
