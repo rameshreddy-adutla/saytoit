@@ -31,6 +31,10 @@ struct MenuBarView: View {
                 if !appState.hasAPIKey {
                     Button {
                         NSApp.activate(ignoringOtherApps: true)
+                        for window in NSApp.windows where window.canBecomeKey {
+                            window.makeKeyAndOrderFront(nil)
+                            break
+                        }
                     } label: {
                         HStack(spacing: 6) {
                             Image(systemName: "key.fill")
@@ -68,6 +72,12 @@ struct MenuBarView: View {
 
                 Button("Open Main Window") {
                     NSApp.activate(ignoringOtherApps: true)
+                    if let window = NSApp.windows.first(where: { $0.title.contains("SayToIt") || $0.isKeyWindow || $0.canBecomeKey }) {
+                        window.makeKeyAndOrderFront(nil)
+                    } else {
+                        // No window found — open a new one
+                        NSApp.sendAction(Selector(("newWindowForTab:")), to: nil, from: nil)
+                    }
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
