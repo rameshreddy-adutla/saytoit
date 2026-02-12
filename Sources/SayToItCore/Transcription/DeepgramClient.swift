@@ -131,7 +131,10 @@ public final class DeepgramClient: NSObject, TranscriptionServiceProtocol, @unch
             URLQueryItem(name: "encoding", value: configuration.encoding),
             URLQueryItem(name: "punctuate", value: "\(configuration.punctuate)"),
             URLQueryItem(name: "interim_results", value: "\(configuration.interimResults)"),
-            URLQueryItem(name: "endpointing", value: "\(configuration.endpointing)")
+            URLQueryItem(name: "endpointing", value: "\(configuration.endpointing)"),
+            URLQueryItem(name: "smart_format", value: "true"),
+            URLQueryItem(name: "filler_words", value: "false"),
+            URLQueryItem(name: "diarize", value: "false"),
         ]
         return components.url!
     }
