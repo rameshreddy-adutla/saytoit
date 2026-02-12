@@ -172,7 +172,8 @@ public final class AppState: ObservableObject {
 
     private func setupHotkey() {
         hotkeyManager.onHotkeyPressed { [weak self] in
-            Task { @MainActor in
+            guard let self else { return }
+            Task { @MainActor [weak self] in
                 self?.toggleRecording()
             }
         }
