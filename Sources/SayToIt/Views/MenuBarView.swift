@@ -27,17 +27,37 @@ struct MenuBarView: View {
 
             // Controls
             HStack {
-                Button(action: appState.toggleRecording) {
-                    HStack(spacing: 6) {
-                        Image(systemName: appState.isRecording ? "stop.circle.fill" : "mic.circle.fill")
-                            .font(.title2)
-                            .foregroundStyle(appState.isRecording ? .red : .accentColor)
-                        Text(appState.isRecording ? "Stop" : "Record")
-                            .font(.body)
+                if !appState.hasAPIKey {
+                    Button {
+                        if #available(macOS 14, *) {
+                            NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+                        } else {
+                            NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
+                        }
+                        NSApp.activate(ignoringOtherApps: true)
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "key.fill")
+                                .font(.title2)
+                                .foregroundStyle(.orange)
+                            Text("Add API Key")
+                                .font(.body)
+                        }
                     }
+                    .buttonStyle(.plain)
+                } else {
+                    Button(action: appState.toggleRecording) {
+                        HStack(spacing: 6) {
+                            Image(systemName: appState.isRecording ? "stop.circle.fill" : "mic.circle.fill")
+                                .font(.title2)
+                                .foregroundStyle(appState.isRecording ? .red : .accentColor)
+                            Text(appState.isRecording ? "Stop" : "Record")
+                                .font(.body)
+                        }
+                    }
+                    .buttonStyle(.plain)
+                    .keyboardShortcut("s", modifiers: [.command, .shift])
                 }
-                .buttonStyle(.plain)
-                .keyboardShortcut("s", modifiers: [.command, .shift])
 
                 Spacer()
 
@@ -51,7 +71,12 @@ struct MenuBarView: View {
                 }
 
                 Button {
-                    NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+                    if #available(macOS 14, *) {
+                        NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+                    } else {
+                        NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
+                    }
+                    NSApp.activate(ignoringOtherApps: true)
                 } label: {
                     Image(systemName: "gear")
                 }

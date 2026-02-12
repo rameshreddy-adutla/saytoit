@@ -83,7 +83,7 @@ struct SettingsView: View {
                         .foregroundStyle(.secondary)
                 }
                 Link("GitHub Repository", destination: URL(string: "https://github.com/rameshreddy-adutla/saytoit")!)
-                Link("saytoit.com", destination: URL(string: "https://saytoit.com")!)
+                Link("saytoit.is-a.dev", destination: URL(string: "https://saytoit.is-a.dev")!)
             }
         }
         .formStyle(.grouped)
